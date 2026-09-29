@@ -1,0 +1,71 @@
+@model ReportRunViewModel
+@using ArxReportes.Models
+@using System.Globalization
+@{ ViewData["Title"] = Model.Report.Name; }
+<div class="page-heading"><div><a class="back-link" asp-controller="Home" asp-action="Index">← Todos los reportes</a><h1>@Model.Report.Name</h1><p>@Model.Report.Description</p></div></div>
+<form method="post" class="panel filter-panel" id="report-form">
+    @if (Model.Report.Parameters.Count > 0)
+    {
+        <div class="row g-3 align-items-end">@foreach (var parameter in Model.Report.Parameters)
+        {
+            var value = Model.Values.GetValueOrDefault(parameter.Name);
+            <div class="col-sm-6 col-lg-3"><label class="form-label" for="@parameter.Name">@parameter.Label @if (parameter.IsRequired) { <span class="required">*</span> }</label>
+            @if (parameter.Type == ReportParameterType.Consulta)
+            {
+                var options = Model.LookupOptions.GetValueOrDefault(parameter.Name) ?? [];
+                <select class="form-select lookup-select" name="@parameter.Name" id="@parameter.Name" required="@parameter.IsRequired" disabled="@(options.Count == 0)">
+                    <option value="">@(options.Count == 0 ? "No hay opciones disponibles" : "Selecciona…")</option>
+                    @foreach (var option in options) { <option value="@option.Value" selected="@(value == option.Value)">@option.Label</option> }
+                </select>
+                @if (!string.IsNullOrWhiteSpace(parameter.Placeholder)) { <div class="form-text">@parameter.Placeholder</div> }
+            }
+            else if (parameter.Type == ReportParameterType.Booleano)
+            { <select class="form-select" name="@parameter.Name" id="@parameter.Name" required="@parameter.IsRequired"><option value="">Selecciona…</option><option value="true" selected="@(value == "true")">Sí</option><option value="false" selected="@(value == "false")">No</option></select> }
+            else
+            {
+                var inputType = parameter.Type switch { ReportParameterType.Fecha => "date", ReportParameterType.FechaHora => "datetime-local", ReportParameterType.Entero or ReportParameterType.Decimal => "number", _ => "text" };
+                var step = parameter.Type == ReportParameterType.Decimal ? "any" : parameter.Type == ReportParameterType.Entero ? "1" : null;
+                <input class="form-control" type="@inputType" step="@step" name="@parameter.Name" id="@parameter.Name" value="@value" placeholder="@parameter.Placeholder" required="@parameter.IsRequired" />
+            }</div>
+        }<div class="col-sm-6 col-lg-3"><button class="btn btn-primary w-100" type="submit">Ejecutar reporte</button></div></div>
+    }
+    else { <button class="btn btn-primary" type="submit">Ejecutar reporte</button> }
+</form>
+@if (!string.IsNullOrWhiteSpace(Model.Error)) { <div class="alert alert-danger mt-4"><strong>No se pudo ejecutar.</strong><br />@Model.Error</div> }
+@if (Model.Result is not null)
+{
+    var highlightedValues = (Model.Report.HighlightFirstColumnValues ?? [])
+        .Select(value => value.Trim())
+        .Where(value => value.Length > 0)
+        .ToHashSet(StringComparer.OrdinalIgnoreCase);
+    <div class="results-heading"><div><h2>Resultados</h2><p>@Model.Result.Rows.Count.ToString("N0") filas · @Model.Result.Elapsed.TotalSeconds.ToString("N2") segundos @if (Model.Result.Truncated) { <span class="text-warning">· Resultado limitado</span> }</p></div><button class="btn btn-success" type="submit" form="report-form" formaction="@Url.Action("Export", new { id = Model.Report.Id })">Exportar a Excel</button></div>
+    <div class="panel result-table table-responsive"><table class="table table-hover table-sm mb-0"><thead><tr>@foreach (var column in Model.Result.Columns) { <th>@column</th> }</tr></thead><tbody>
+    @if (Model.Result.Rows.Count == 0) { <tr><td colspan="@Math.Max(1, Model.Result.Columns.Count)" class="text-center text-muted py-5">La consulta no devolvió registros.</td></tr> }
+    @foreach (var row in Model.Result.Rows)
+    {
+        var highlighted = IsHighlightedRow(row, highlightedValues);
+        <tr class="@(highlighted ? "highlighted-report-row" : null)">@foreach (var value in row) { <td>@FormatValue(value)</td> }</tr>
+    }
+    </tbody>
+    @if (Model.Report.ShowColumnTotals && Model.Result.ColumnTotals.Any(x => x.HasValue))
+    {
+        var labelColumn = Model.Result.ColumnTotals.FindIndex(x => !x.HasValue);
+        <tfoot><tr class="totals-row">
+        @for (var column = 0; column < Model.Result.Columns.Count; column++)
+        {
+            var total = Model.Result.ColumnTotals[column];
+            <td>@(total.HasValue ? total.Value.ToString("N2", CultureInfo.CurrentCulture) : column == labelColumn ? "Totales" : "")</td>
+        }
+        </tr></tfoot>
+    }
+    </table></div>
+}
+@functions {
+    static string FormatValue(object? value) => value switch { null => "", DateTime date => date.ToString("dd/MM/yyyy HH:mm", CultureInfo.CurrentCulture), decimal number => number.ToString("N2", CultureInfo.CurrentCulture), bool boolean => boolean ? "Sí" : "No", byte[] bytes => $"[{bytes.Length} bytes]", _ => Convert.ToString(value, CultureInfo.CurrentCulture) ?? "" };
+    static bool IsHighlightedRow(IReadOnlyList<object?> row, ISet<string> configuredValues)
+    {
+        if (row.Count == 0 || row[0] is null) return false;
+        var firstValue = Convert.ToString(row[0], CultureInfo.CurrentCulture)?.Trim();
+        return !string.IsNullOrEmpty(firstValue) && configuredValues.Contains(firstValue);
+    }
+}

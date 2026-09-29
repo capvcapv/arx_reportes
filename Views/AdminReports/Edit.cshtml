@@ -1,0 +1,49 @@
+@model ReportEditViewModel
+@using ArxReportes.Models
+@{ var isNew = string.IsNullOrWhiteSpace(Model.Report.Name); ViewData["Title"] = isNew ? "Nuevo reporte" : "Editar reporte"; }
+<div class="page-heading"><div><span class="eyebrow">DISEÑADOR</span><h1>@ViewData["Title"]</h1><p>Define la consulta parametrizada y los campos que verá el usuario.</p></div></div>
+<form method="post" class="panel form-panel">
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div><div class="row g-4">
+        <div class="col-md-8"><label asp-for="Report.Name" class="form-label"></label><input asp-for="Report.Name" class="form-control" /><span asp-validation-for="Report.Name" class="text-danger"></span></div>
+        <div class="col-md-4"><label asp-for="Report.ConnectionId" class="form-label"></label><select asp-for="Report.ConnectionId" asp-items="Model.Connections" class="form-select"><option value="">Selecciona…</option></select><span asp-validation-for="Report.ConnectionId" class="text-danger"></span></div>
+        <div class="col-12"><label asp-for="Report.Description" class="form-label"></label><input asp-for="Report.Description" class="form-control" /><span asp-validation-for="Report.Description" class="text-danger"></span></div>
+        <div class="col-12"><label asp-for="Report.Sql" class="form-label"></label><textarea asp-for="Report.Sql" class="form-control sql-editor" rows="10" spellcheck="false" placeholder="SELECT ... WHERE Fecha BETWEEN @@FechaInicio AND @@FechaFin"></textarea><div class="form-text">Sólo se aceptan consultas que inicien con SELECT o WITH. Usa parámetros como <code>@@ClienteId</code>; nunca concatenes valores.</div><span asp-validation-for="Report.Sql" class="text-danger"></span></div>
+        <div class="col-md-3"><label asp-for="Report.CommandTimeoutSeconds" class="form-label"></label><input asp-for="Report.CommandTimeoutSeconds" class="form-control" /></div>
+        <div class="col-md-3"><label asp-for="Report.DisplayOrder" class="form-label"></label><input asp-for="Report.DisplayOrder" class="form-control" /></div>
+        <div class="col-md-3 d-flex align-items-end"><div class="form-check form-switch mb-2"><input asp-for="Report.IsActive" class="form-check-input" /><label asp-for="Report.IsActive" class="form-check-label"></label></div></div>
+        <div class="col-md-3 d-flex align-items-end"><div class="form-check form-switch mb-2"><input asp-for="Report.ShowColumnTotals" class="form-check-input" /><label asp-for="Report.ShowColumnTotals" class="form-check-label"></label></div></div>
+        <div class="col-12 highlight-config">
+            <label asp-for="HighlightFirstColumnValuesText" class="form-label"></label>
+            <textarea asp-for="HighlightFirstColumnValuesText" class="form-control" rows="5" placeholder="SUMA 80%&#10;SUMA 20%&#10;TOTAL COBRANZA CORRIENTE"></textarea>
+            <div class="form-text">Escribe un valor por línea. Si el contenido de la primera columna coincide exactamente, se sombreará toda la fila. No distingue mayúsculas/minúsculas ni espacios exteriores.</div>
+            <span asp-validation-for="HighlightFirstColumnValuesText" class="text-danger"></span>
+        </div>
+    </div>
+    <div class="section-heading"><div><h2>Parámetros</h2><p>El nombre debe coincidir con el usado en SQL, sin el signo @@.</p></div><button class="btn btn-sm btn-outline-primary" id="add-parameter" type="button">+ Agregar parámetro</button></div>
+    <div id="parameters" class="parameter-list">@for (var index = 0; index < Model.Report.Parameters.Count; index++) { <partial name="_ParameterRow" model="(Model.Report.Parameters[index], index)" /> }</div>
+    <div id="no-parameters" class="parameter-empty @(Model.Report.Parameters.Count > 0 ? "d-none" : "")">Este reporte no solicita parámetros.</div>
+    <div class="form-actions"><a class="btn btn-light" asp-action="Index">Cancelar</a><button class="btn btn-primary" type="submit">Guardar reporte</button></div>
+</form>
+<template id="parameter-template"><div class="parameter-row">
+    <div><label class="form-label">Nombre</label><input data-field="Name" class="form-control" placeholder="FechaInicio" required /></div><div><label class="form-label">Etiqueta</label><input data-field="Label" class="form-control" placeholder="Fecha inicial" required /></div>
+    <div><label class="form-label">Tipo</label><select data-field="Type" class="form-select parameter-type">@foreach (var type in Enum.GetValues<ReportParameterType>()) { <option value="@type">@type</option> }</select></div>
+    <div><label class="form-label">Predeterminado</label><input data-field="DefaultValue" class="form-control" /></div><div><label class="form-label">Ayuda</label><input data-field="Placeholder" class="form-control" /></div>
+    <div class="d-flex align-items-end gap-3"><div class="form-check mb-2"><input data-field="IsRequired" type="checkbox" class="form-check-input" value="true" /><label class="form-check-label">Obligatorio</label></div><button type="button" class="btn btn-sm btn-outline-danger remove-parameter mb-1">Quitar</button></div>
+    <div class="lookup-config d-none">
+        <div class="lookup-query"><label class="form-label">Consulta para llenar la lista</label><textarea data-field="LookupSql" class="form-control" rows="4" spellcheck="false" placeholder="SELECT CIDCLIENTEPROVEEDOR, CCODIGOCLIENTE, CRAZONSOCIAL FROM admClientes ORDER BY CRAZONSOCIAL"></textarea></div>
+        <div><label class="form-label">Columna de valor</label><input data-field="LookupValueColumn" class="form-control" placeholder="CIDCLIENTEPROVEEDOR" /></div>
+        <div><label class="form-label">Columnas visibles</label><input data-field="LookupDisplayColumns" class="form-control" placeholder="CCODIGOCLIENTE, CRAZONSOCIAL" /><div class="form-text">Sepáralas con comas.</div></div>
+        <div><label class="form-label">Tipo del valor</label><select data-field="LookupValueType" class="form-select">@foreach (var type in Enum.GetValues<LookupValueType>()) { <option value="@type">@type</option> }</select></div>
+    </div>
+</div></template>
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        const list=document.getElementById('parameters'),empty=document.getElementById('no-parameters');
+        function toggleLookup(row){const isLookup=row.querySelector('.parameter-type')?.value==='Consulta';row.querySelector('.lookup-config')?.classList.toggle('d-none',!isLookup);}
+        function reindex(){[...list.querySelectorAll('.parameter-row')].forEach((row,index)=>{row.querySelectorAll('[data-field]').forEach(input=>input.name=`Report.Parameters[${index}].${input.dataset.field}`);toggleLookup(row);});empty.classList.toggle('d-none',list.children.length>0);}
+        document.getElementById('add-parameter').addEventListener('click',()=>{list.append(document.getElementById('parameter-template').content.cloneNode(true));reindex();});
+        list.addEventListener('click',event=>{if(event.target.closest('.remove-parameter')){event.target.closest('.parameter-row').remove();reindex();}});
+        list.addEventListener('change',event=>{if(event.target.matches('.parameter-type'))toggleLookup(event.target.closest('.parameter-row'));});reindex();
+    </script>
+}

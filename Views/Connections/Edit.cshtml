@@ -1,0 +1,62 @@
+@model ConnectionDefinition
+@{ var isNew = string.IsNullOrWhiteSpace(Model.Name); ViewData["Title"] = isNew ? "Nueva conexión" : "Editar conexión"; }
+<div class="page-heading"><div><span class="eyebrow">CONFIGURACIÓN</span><h1>@ViewData["Title"]</h1><p>Usa preferentemente una cuenta SQL con permisos exclusivos de lectura.</p></div></div>
+<form method="post" class="panel form-panel">
+    <input asp-for="Id" type="hidden" />
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div><div class="row g-4">
+        <div class="col-md-6"><label asp-for="Name" class="form-label"></label><input asp-for="Name" class="form-control" /><span asp-validation-for="Name" class="text-danger"></span></div>
+        <div class="col-md-6"><label asp-for="Server" class="form-label"></label><input asp-for="Server" class="form-control" placeholder="SERVIDOR\INSTANCIA o servidor,1433" /><span asp-validation-for="Server" class="text-danger"></span></div>
+        <div class="col-md-6">
+            <label asp-for="Database" class="form-label"></label>
+            <div class="input-group database-picker">
+                <input asp-for="Database" class="form-control" list="database-options" autocomplete="off" placeholder="Escribe o consulta las bases disponibles" />
+                <button class="btn btn-outline-primary" id="load-databases" type="button">Consultar bases</button>
+            </div>
+            <datalist id="database-options"></datalist>
+            <div class="form-text" id="database-status">Utiliza el servidor y las credenciales capturadas arriba.</div>
+            <span asp-validation-for="Database" class="text-danger"></span>
+        </div>
+        <div class="col-md-6 d-flex align-items-end"><div class="form-check form-switch mb-2"><input asp-for="IntegratedSecurity" class="form-check-input" /><label asp-for="IntegratedSecurity" class="form-check-label"></label></div></div>
+        <div class="col-md-6 sql-auth"><label asp-for="UserName" class="form-label"></label><input asp-for="UserName" class="form-control" autocomplete="off" /><span asp-validation-for="UserName" class="text-danger"></span></div>
+        <div class="col-md-6 sql-auth"><label asp-for="Password" class="form-label"></label><input asp-for="Password" class="form-control" autocomplete="new-password" placeholder="@(isNew ? "Contraseña" : "Dejar vacío para conservar")" /><span asp-validation-for="Password" class="text-danger"></span></div>
+        <div class="col-md-4"><div class="form-check form-switch"><input asp-for="Encrypt" class="form-check-input" /><label asp-for="Encrypt" class="form-check-label"></label></div></div>
+        <div class="col-md-4"><div class="form-check form-switch"><input asp-for="TrustServerCertificate" class="form-check-input" /><label asp-for="TrustServerCertificate" class="form-check-label"></label></div></div>
+        <div class="col-md-4"><div class="form-check form-switch"><input asp-for="IsActive" class="form-check-input" /><label asp-for="IsActive" class="form-check-label"></label></div></div>
+    </div><div class="form-actions"><a class="btn btn-light" asp-action="Index">Cancelar</a><button class="btn btn-primary" type="submit">Guardar conexión</button></div>
+</form>
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        const integrated=document.getElementById('IntegratedSecurity');
+        const updateAuth=()=>document.querySelectorAll('.sql-auth').forEach(x=>x.classList.toggle('opacity-50',integrated.checked));
+        integrated.addEventListener('change',updateAuth);updateAuth();
+
+        const connectionForm=document.querySelector('form.form-panel');
+        const loadButton=document.getElementById('load-databases');
+        const databaseInput=document.getElementById('Database');
+        const databaseOptions=document.getElementById('database-options');
+        const databaseStatus=document.getElementById('database-status');
+        loadButton.addEventListener('click',async()=>{
+            const originalText=loadButton.textContent;
+            loadButton.disabled=true;
+            loadButton.textContent='Consultando…';
+            databaseStatus.className='form-text text-muted';
+            databaseStatus.textContent='Conectando con SQL Server…';
+            try {
+                const response=await fetch('@Url.Action("ListDatabases", "Connections")',{method:'POST',body:new FormData(connectionForm),headers:{'X-Requested-With':'XMLHttpRequest'}});
+                const result=await response.json();
+                if(!response.ok||!result.success)throw new Error(result.message||'No fue posible consultar las bases.');
+                databaseOptions.replaceChildren(...result.databases.map(name=>{const option=document.createElement('option');option.value=name;return option;}));
+                databaseStatus.className='form-text text-success';
+                databaseStatus.textContent=`${result.databases.length} bases disponibles. Abre el campo para seleccionar una.`;
+                databaseInput.focus();
+            } catch(error) {
+                databaseStatus.className='form-text text-danger';
+                databaseStatus.textContent=error.message;
+            } finally {
+                loadButton.disabled=false;
+                loadButton.textContent=originalText;
+            }
+        });
+    </script>
+}

@@ -1,0 +1,6 @@
+bin/
+obj/
+publish/
+App_Data/
+appsettings.Production.json
+.DS_Store

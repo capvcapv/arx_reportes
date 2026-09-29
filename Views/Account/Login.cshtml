@@ -1,0 +1,22 @@
+@model UserLoginViewModel
+@{ ViewData["Title"] = "Iniciar sesión"; }
+<div class="login-wrap">
+    <div class="panel login-card">
+        <div class="login-visual" role="img" aria-label="Documentos con gráficas de reportes"></div>
+        <div class="login-form">
+            <span class="eyebrow">PORTAL DE REPORTES</span>
+            <h1 class="h3 mt-2">Bienvenido</h1>
+            <p class="text-muted">Ingresa para consultar los reportes asignados a tu usuario.</p>
+            <form method="post">
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+                <input asp-for="ReturnUrl" type="hidden" />
+                <div class="mb-3"><label asp-for="UserName" class="form-label"></label><input asp-for="UserName" class="form-control form-control-lg" autocomplete="username" autofocus /><span asp-validation-for="UserName" class="text-danger"></span></div>
+                <div class="mb-3"><label asp-for="Password" class="form-label"></label><input asp-for="Password" class="form-control form-control-lg" autocomplete="current-password" /><span asp-validation-for="Password" class="text-danger"></span></div>
+                <button class="btn btn-primary w-100" type="submit">Ingresar</button>
+            </form>
+            <div class="admin-access-link"><a asp-controller="AdminAccount" asp-action="Login">Acceso para administrador</a></div>
+        </div>
+    </div>
+</div>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }
+

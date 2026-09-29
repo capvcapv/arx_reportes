@@ -1,0 +1,30 @@
+@model IReadOnlyList<ReportDefinition>
+@{ ViewData["Title"] = "Reportes disponibles"; }
+
+<section class="hero mb-5">
+    <div class="hero-copy">
+        <span class="eyebrow">CENTRO DE INFORMACIÓN</span>
+        <h1>Reportes disponibles</h1>
+        <p>Selecciona un reporte, captura sus parámetros y consulta la información al momento.</p>
+    </div>
+</section>
+
+@if (Model.Count == 0)
+{
+    <div class="empty-state">
+        <div class="empty-icon">▦</div><h2>Aún no hay reportes publicados</h2>
+        <p>Un administrador debe configurar una conexión y dar de alta el primer reporte.</p>
+        @if (User.Identity?.IsAuthenticated == true) { <a class="btn btn-primary" asp-controller="AdminReports" asp-action="Create">Crear reporte</a> }
+    </div>
+}
+else
+{
+    <div class="row g-4">
+        @foreach (var report in Model)
+        {
+            <div class="col-md-6 col-xl-4"><a class="report-card" asp-controller="Reports" asp-action="Run" asp-route-id="@report.Id">
+                <div class="report-card-icon">▤</div><div><h2>@report.Name</h2><p>@(report.Description ?? "Consulta este reporte y exporta sus resultados a Excel.")</p><span>Ejecutar reporte <strong>→</strong></span></div>
+            </a></div>
+        }
+    </div>
+}

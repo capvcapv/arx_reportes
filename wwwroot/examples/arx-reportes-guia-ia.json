@@ -1,0 +1,180 @@
+{
+  "documentType": "ARX_REPORTES_AI_GUIDE",
+  "guideVersion": 1,
+  "language": "es-MX",
+  "purpose": "Guía para que una IA genere archivos de reporte compatibles con la función Importar JSON de ARX Reportes.",
+  "importantInstructions": [
+    "Para importar un reporte, el archivo final debe contener únicamente el objeto descrito en importableExample.",
+    "No incluyas documentType, guideVersion, formatContract, recommendedPrompt ni explicaciones en un archivo que será importado.",
+    "No incluyas identificadores internos, usuarios, contraseñas, cadenas de conexión ni otras credenciales.",
+    "La sentencia principal debe comenzar con SELECT o WITH.",
+    "Todos los valores proporcionados por el usuario deben utilizar parámetros SQL con nombre, por ejemplo @FechaInicial.",
+    "Cada parámetro utilizado en SQL debe existir en report.parameters y su propiedad name no debe incluir el signo @.",
+    "Los nombres de parámetros sólo pueden contener letras, números y guion bajo, y deben comenzar con una letra o guion bajo.",
+    "La conexión se resuelve por sourceConnectionName o puede reemplazarse manualmente al importar.",
+    "Las consultas de opciones para parámetros tipo Consulta se ejecutan en la misma conexión del reporte y también deben comenzar con SELECT o WITH.",
+    "Para destacar filas, agrega los textos exactos esperados en la primera columna dentro de report.highlightFirstColumnValues.",
+    "El archivo JSON debe ser válido, sin comentarios, bloques Markdown ni texto antes o después del objeto raíz."
+  ],
+  "formatContract": {
+    "root": {
+      "schemaVersion": "Número entero. Actualmente debe ser 1.",
+      "exportedAtUtc": "Fecha ISO 8601 en UTC, por ejemplo 2026-09-26T15:00:00Z.",
+      "sourceConnectionName": "Nombre exacto de la conexión de origen. No es una cadena de conexión.",
+      "report": "Definición del reporte."
+    },
+    "report": {
+      "name": "Texto obligatorio, máximo 120 caracteres.",
+      "description": "Texto opcional, máximo 500 caracteres.",
+      "sql": "Consulta obligatoria que comienza con SELECT o WITH.",
+      "commandTimeoutSeconds": "Entero entre 1 y 600.",
+      "displayOrder": "Entero entre 0 y 9999.",
+      "isActive": "Booleano. true publica el reporte.",
+      "showColumnTotals": "Booleano. true agrega sumatorias para columnas numéricas.",
+      "highlightFirstColumnValues": "Arreglo de cero a 200 textos. Si la primera columna coincide exactamente con uno de ellos, la fila se destaca. La comparación ignora mayúsculas/minúsculas y espacios exteriores.",
+      "parameters": "Arreglo de cero a 100 parámetros."
+    },
+    "parameter": {
+      "name": "Nombre usado en SQL, sin @. Ejemplo: FechaInicial.",
+      "label": "Etiqueta visible para el usuario, máximo 100 caracteres.",
+      "type": "Uno de los valores de allowedParameterTypes.",
+      "isRequired": "Booleano.",
+      "defaultValue": "Valor predeterminado expresado como texto o null.",
+      "placeholder": "Texto de ayuda opcional, máximo 150 caracteres.",
+      "lookupSql": "Sólo para Consulta: SELECT o WITH que devuelve las opciones.",
+      "lookupValueColumn": "Sólo para Consulta: columna cuyo valor se enviará al parámetro SQL.",
+      "lookupDisplayColumns": "Sólo para Consulta: columnas visibles separadas por comas.",
+      "lookupValueType": "Sólo para Consulta: tipo real de la columna de valor."
+    },
+    "allowedParameterTypes": [
+      "Texto",
+      "Entero",
+      "Decimal",
+      "Fecha",
+      "FechaHora",
+      "Booleano",
+      "Consulta"
+    ],
+    "allowedLookupValueTypes": [
+      "Texto",
+      "Entero",
+      "Decimal",
+      "Booleano"
+    ],
+    "defaultValueExamples": {
+      "Texto": "ACTIVO",
+      "Entero": "100",
+      "Decimal": "1250.50",
+      "Fecha": "2026-01-01",
+      "FechaHora": "2026-01-01T08:30",
+      "Booleano": "true",
+      "Consulta": "1"
+    }
+  },
+  "recommendedPrompt": "Usa esta guía para generar un reporte compatible con ARX Reportes. Devuelve solamente el objeto JSON que corresponde a importableExample, sin Markdown ni explicaciones. No inventes nombres de tablas o columnas: utiliza únicamente el esquema SQL que te proporcione. Usa parámetros SQL en vez de concatenar valores. No incluyas credenciales.",
+  "importableExample": {
+    "schemaVersion": 1,
+    "exportedAtUtc": "2026-09-26T15:00:00Z",
+    "sourceConnectionName": "SQL Producción",
+    "report": {
+      "name": "Ejemplo completo de parámetros",
+      "description": "Plantilla demostrativa con todos los tipos de parámetros admitidos por ARX Reportes.",
+      "sql": "SELECT\n    d.Id,\n    d.Folio,\n    d.Fecha,\n    d.ClienteId,\n    d.Total,\n    d.Activo\nFROM Documentos AS d\nWHERE (@Texto IS NULL OR d.Folio LIKE '%' + @Texto + '%')\n  AND (@Entero IS NULL OR d.Id >= @Entero)\n  AND (@Decimal IS NULL OR d.Total >= @Decimal)\n  AND (@Fecha IS NULL OR d.Fecha >= @Fecha)\n  AND (@FechaHora IS NULL OR d.FechaRegistro >= @FechaHora)\n  AND (@Booleano IS NULL OR d.Activo = @Booleano)\n  AND (@ClienteId IS NULL OR d.ClienteId = @ClienteId)\nORDER BY d.Fecha DESC;",
+      "commandTimeoutSeconds": 60,
+      "displayOrder": 10,
+      "isActive": true,
+      "showColumnTotals": true,
+      "highlightFirstColumnValues": [
+        "SUMA 80%",
+        "SUMA 20%",
+        "TOTAL COBRANZA CORRIENTE"
+      ],
+      "parameters": [
+        {
+          "name": "Texto",
+          "label": "Buscar folio",
+          "type": "Texto",
+          "isRequired": false,
+          "defaultValue": null,
+          "placeholder": "Escribe parte del folio",
+          "lookupSql": null,
+          "lookupValueColumn": null,
+          "lookupDisplayColumns": null,
+          "lookupValueType": "Texto"
+        },
+        {
+          "name": "Entero",
+          "label": "Identificador mínimo",
+          "type": "Entero",
+          "isRequired": false,
+          "defaultValue": "1",
+          "placeholder": "Número entero",
+          "lookupSql": null,
+          "lookupValueColumn": null,
+          "lookupDisplayColumns": null,
+          "lookupValueType": "Texto"
+        },
+        {
+          "name": "Decimal",
+          "label": "Importe mínimo",
+          "type": "Decimal",
+          "isRequired": false,
+          "defaultValue": "0.00",
+          "placeholder": "Importe decimal",
+          "lookupSql": null,
+          "lookupValueColumn": null,
+          "lookupDisplayColumns": null,
+          "lookupValueType": "Texto"
+        },
+        {
+          "name": "Fecha",
+          "label": "Fecha inicial",
+          "type": "Fecha",
+          "isRequired": true,
+          "defaultValue": "2026-01-01",
+          "placeholder": "Fecha desde la que se consultará",
+          "lookupSql": null,
+          "lookupValueColumn": null,
+          "lookupDisplayColumns": null,
+          "lookupValueType": "Texto"
+        },
+        {
+          "name": "FechaHora",
+          "label": "Registrado después de",
+          "type": "FechaHora",
+          "isRequired": false,
+          "defaultValue": "2026-01-01T08:30",
+          "placeholder": "Fecha y hora",
+          "lookupSql": null,
+          "lookupValueColumn": null,
+          "lookupDisplayColumns": null,
+          "lookupValueType": "Texto"
+        },
+        {
+          "name": "Booleano",
+          "label": "Sólo activos",
+          "type": "Booleano",
+          "isRequired": false,
+          "defaultValue": "true",
+          "placeholder": "Selecciona Sí o No",
+          "lookupSql": null,
+          "lookupValueColumn": null,
+          "lookupDisplayColumns": null,
+          "lookupValueType": "Texto"
+        },
+        {
+          "name": "ClienteId",
+          "label": "Cliente",
+          "type": "Consulta",
+          "isRequired": false,
+          "defaultValue": null,
+          "placeholder": "Selecciona un cliente del catálogo",
+          "lookupSql": "SELECT Id, Codigo, Nombre FROM Clientes WHERE Activo = 1 ORDER BY Nombre;",
+          "lookupValueColumn": "Id",
+          "lookupDisplayColumns": "Codigo, Nombre",
+          "lookupValueType": "Entero"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,119 @@
+@model IReadOnlyList<ReportDefinition>
+@using Microsoft.AspNetCore.Mvc.Rendering
+@{
+    ViewData["Title"] = "Administrar reportes";
+    var connections = ViewBag.Connections as Dictionary<Guid, string> ?? new();
+    var connectionItems = ViewBag.ConnectionItems as List<SelectListItem> ?? new();
+}
+<div class="page-heading">
+    <div><span class="eyebrow">CONFIGURACIÓN</span><h1>Reportes</h1><p>Consultas publicadas para los usuarios.</p></div>
+    <div class="d-flex flex-wrap gap-2">
+        <a class="btn btn-outline-secondary" asp-action="DownloadAiGuide" title="Descargar formato, reglas y ejemplo para una IA">↓ Guía JSON para IA</a>
+        <button class="btn btn-outline-primary" type="button" data-bs-toggle="modal" data-bs-target="#importReportModal">↑ Importar JSON</button>
+        <a class="btn btn-primary" asp-action="Create">+ Nuevo reporte</a>
+    </div>
+</div>
+<div class="reorder-hint mb-3"><span class="drag-symbol">⋮⋮</span> Arrastra los reportes para cambiar el orden del catálogo. <span id="order-status" aria-live="polite"></span></div>
+<div class="panel table-responsive"><table class="table align-middle mb-0">
+    <thead><tr><th class="drag-column"><span class="visually-hidden">Ordenar</span></th><th>Reporte</th><th>Conexión</th><th>Parámetros</th><th>Estado</th><th class="text-end">Acciones</th></tr></thead><tbody id="sortable-reports">
+    @if (Model.Count == 0) { <tr><td colspan="6" class="text-center text-muted py-5">No hay reportes configurados.</td></tr> }
+    @foreach (var item in Model)
+    {
+        <tr data-report-id="@item.Id"><td class="drag-column"><button class="drag-handle" type="button" draggable="true" title="Arrastrar para ordenar" aria-label="Mover @item.Name">⋮⋮</button></td><td><strong>@item.Name</strong><small class="d-block text-muted">@item.Description</small></td><td>@(connections.GetValueOrDefault(item.ConnectionId) ?? "Conexión no disponible")</td><td>@item.Parameters.Count</td><td><span class="badge @(item.IsActive ? "text-bg-success" : "text-bg-secondary")">@(item.IsActive ? "Publicado" : "Inactivo")</span></td>
+        <td class="text-end text-nowrap">@if (item.IsActive) { <a class="btn btn-sm btn-outline-success" asp-controller="Reports" asp-action="Run" asp-route-id="@item.Id">Abrir</a> } <a class="btn btn-sm btn-outline-secondary" asp-action="Export" asp-route-id="@item.Id" title="Descargar configuración portable">↓ JSON</a> <a class="btn btn-sm btn-outline-primary" asp-action="Edit" asp-route-id="@item.Id">Editar</a> <form class="d-inline" asp-action="Delete" asp-route-id="@item.Id" method="post" onsubmit="return confirm('¿Eliminar este reporte?')"><button class="btn btn-sm btn-outline-danger">Eliminar</button></form></td></tr>
+    }
+    </tbody>
+</table></div>
+<form id="reorder-form" class="d-none" asp-action="Reorder" method="post"></form>
+
+<div class="modal fade" id="importReportModal" tabindex="-1" aria-labelledby="importReportTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content paper-modal">
+            <form asp-action="Import" method="post" enctype="multipart/form-data">
+                <div class="modal-header">
+                    <div><span class="eyebrow">TRANSFERIR REPORTE</span><h2 class="modal-title fs-5 mt-1" id="importReportTitle">Importar archivo JSON</h2></div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-4">
+                        <label class="form-label" for="reportFile">Archivo de reporte</label>
+                        <input class="form-control" id="reportFile" name="file" type="file" accept=".json,.arxreport.json,application/json" />
+                        <div class="form-text">Máximo 1 MB. El archivo no contiene contraseñas ni credenciales SQL.</div>
+                    </div>
+                    <div class="import-divider"><span>o pega el contenido</span></div>
+                    <div class="mb-4">
+                        <label class="form-label" for="reportJsonText">Texto JSON</label>
+                        <textarea class="form-control import-json-editor" id="reportJsonText" name="jsonText" rows="9" spellcheck="false" placeholder="{&#10;  &quot;schemaVersion&quot;: 1,&#10;  &quot;sourceConnectionName&quot;: &quot;SQL Producción&quot;,&#10;  &quot;report&quot;: { ... }&#10;}"></textarea>
+                        <div class="form-text">Si eliges un archivo y también pegas texto, se utilizará el archivo.</div>
+                    </div>
+                    <div>
+                        <label class="form-label" for="destinationConnection">Conexión destino</label>
+                        <select class="form-select" id="destinationConnection" name="connectionId">
+                            <option value="">Usar la conexión indicada en el archivo</option>
+                            @foreach (var connection in connectionItems) { <option value="@connection.Value">@connection.Text</option> }
+                        </select>
+                        <div class="form-text">Puedes reemplazar la conexión de origen al importar en otro servidor.</div>
+                    </div>
+                    <div class="import-note mt-4">El reporte importado recibirá un identificador nuevo y la fecha/hora se agregará a su nombre para evitar sobrescrituras.</div>
+                </div>
+                <div class="modal-footer"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-primary">Importar reporte</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const reportRows=document.getElementById('sortable-reports');
+        const orderStatus=document.getElementById('order-status');
+        const reorderForm=document.getElementById('reorder-form');
+        let draggedRow=null;
+
+        reportRows?.querySelectorAll('.drag-handle').forEach(handle=>{
+            handle.addEventListener('dragstart',event=>{
+                draggedRow=handle.closest('tr');
+                draggedRow.classList.add('is-dragging');
+                event.dataTransfer.effectAllowed='move';
+                event.dataTransfer.setData('text/plain',draggedRow.dataset.reportId);
+            });
+            handle.addEventListener('dragend',()=>{
+                draggedRow?.classList.remove('is-dragging');
+                draggedRow=null;
+                reportRows.querySelectorAll('tr').forEach(row=>row.classList.remove('drag-target'));
+            });
+        });
+
+        reportRows?.addEventListener('dragover',event=>{
+            if(!draggedRow)return;
+            event.preventDefault();
+            event.dataTransfer.dropEffect='move';
+            const target=event.target.closest('tr[data-report-id]');
+            if(!target||target===draggedRow)return;
+            const bounds=target.getBoundingClientRect();
+            const insertAfter=event.clientY>bounds.top+bounds.height/2;
+            reportRows.insertBefore(draggedRow,insertAfter?target.nextSibling:target);
+            reportRows.querySelectorAll('tr').forEach(row=>row.classList.remove('drag-target'));
+            target.classList.add('drag-target');
+        });
+
+        reportRows?.addEventListener('drop',async event=>{
+            if(!draggedRow)return;
+            event.preventDefault();
+            orderStatus.className='saving';
+            orderStatus.textContent='Guardando orden…';
+            const formData=new FormData(reorderForm);
+            reportRows.querySelectorAll('tr[data-report-id]').forEach(row=>formData.append('ids',row.dataset.reportId));
+            try {
+                const response=await fetch('@Url.Action("Reorder", "AdminReports")',{method:'POST',body:formData,headers:{'X-Requested-With':'XMLHttpRequest'}});
+                const result=await response.json();
+                if(!response.ok||!result.success)throw new Error(result.message||'No fue posible guardar el orden.');
+                orderStatus.className='saved';
+                orderStatus.textContent='Orden guardado';
+                setTimeout(()=>orderStatus.textContent='',2200);
+            } catch(error) {
+                orderStatus.className='failed';
+                orderStatus.textContent=error.message;
+            }
+        });
+    </script>
+}

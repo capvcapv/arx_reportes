@@ -1,0 +1,15 @@
+@model ValueTuple<ReportParameterDefinition, int>
+@using ArxReportes.Models
+@{ var parameter = Model.Item1; var index = Model.Item2; }
+<div class="parameter-row">
+    <div><label class="form-label">Nombre</label><input name="Report.Parameters[@index].Name" data-field="Name" value="@parameter.Name" class="form-control" required /></div><div><label class="form-label">Etiqueta</label><input name="Report.Parameters[@index].Label" data-field="Label" value="@parameter.Label" class="form-control" required /></div>
+    <div><label class="form-label">Tipo</label><select name="Report.Parameters[@index].Type" data-field="Type" class="form-select parameter-type">@foreach (var type in Enum.GetValues<ReportParameterType>()) { <option value="@type" selected="@(type == parameter.Type)">@type</option> }</select></div>
+    <div><label class="form-label">Predeterminado</label><input name="Report.Parameters[@index].DefaultValue" data-field="DefaultValue" value="@parameter.DefaultValue" class="form-control" /></div><div><label class="form-label">Ayuda</label><input name="Report.Parameters[@index].Placeholder" data-field="Placeholder" value="@parameter.Placeholder" class="form-control" /></div>
+    <div class="d-flex align-items-end gap-3"><div class="form-check mb-2"><input name="Report.Parameters[@index].IsRequired" data-field="IsRequired" type="checkbox" class="form-check-input" value="true" checked="@parameter.IsRequired" /><label class="form-check-label">Obligatorio</label></div><button type="button" class="btn btn-sm btn-outline-danger remove-parameter mb-1">Quitar</button></div>
+    <div class="lookup-config @(parameter.Type == ReportParameterType.Consulta ? "" : "d-none")">
+        <div class="lookup-query"><label class="form-label">Consulta para llenar la lista</label><textarea name="Report.Parameters[@index].LookupSql" data-field="LookupSql" class="form-control" rows="4" spellcheck="false">@parameter.LookupSql</textarea></div>
+        <div><label class="form-label">Columna de valor</label><input name="Report.Parameters[@index].LookupValueColumn" data-field="LookupValueColumn" value="@parameter.LookupValueColumn" class="form-control" /></div>
+        <div><label class="form-label">Columnas visibles</label><input name="Report.Parameters[@index].LookupDisplayColumns" data-field="LookupDisplayColumns" value="@parameter.LookupDisplayColumns" class="form-control" /><div class="form-text">Sepáralas con comas.</div></div>
+        <div><label class="form-label">Tipo del valor</label><select name="Report.Parameters[@index].LookupValueType" data-field="LookupValueType" class="form-select">@foreach (var type in Enum.GetValues<LookupValueType>()) { <option value="@type" selected="@(type == parameter.LookupValueType)">@type</option> }</select></div>
+    </div>
+</div>

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] · Arx Reportes</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-dark app-navbar">
+            <div class="container">
+                <a class="navbar-brand d-flex align-items-center" asp-controller="Home" asp-action="Index" aria-label="Ir al inicio de ARX Reportes">
+                    <img class="brand-logo" src="~/images/arx-reportes-logo.png" asp-append-version="true" alt="ARX Reportes" />
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-label="Abrir menú"><span class="navbar-toggler-icon"></span></button>
+                <div class="navbar-collapse collapse justify-content-between">
+                    <ul class="navbar-nav">
+                        <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Index">Reportes</a></li>
+                        @if (User.IsInRole("Admin"))
+                        {
+                            <li class="nav-item"><a class="nav-link" asp-controller="AdminReports" asp-action="Index">Administrar</a></li>
+                            <li class="nav-item"><a class="nav-link" asp-controller="Connections" asp-action="Index">Conexiones</a></li>
+                            <li class="nav-item"><a class="nav-link" asp-controller="Users" asp-action="Index">Usuarios</a></li>
+                        }
+                    </ul>
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                        <div class="d-flex align-items-center gap-2 session-controls">
+                            <span class="session-name">@User.Identity.Name</span>
+                            <form asp-controller="Account" asp-action="Logout" method="post"><button class="btn btn-sm btn-outline-light" type="submit">Cerrar sesión</button></form>
+                        </div>
+                    }
+                    else
+                    {
+                        <a class="nav-link" asp-controller="Account" asp-action="Login">Iniciar sesión</a>
+                    }
+                </div>
+            </div>
+        </nav>
+    </header>
+    <div class="container py-4 py-lg-5 app-content">
+        @if (TempData["Success"] is string success)
+        {
+            <div class="alert alert-success alert-dismissible fade show" role="alert">@success<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+        }
+        @if (TempData["Error"] is string error)
+        {
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">@error<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+        }
+        <main role="main">@RenderBody()</main>
+    </div>
+    <footer class="app-footer">
+        <div class="container footer-inner">
+            <div class="footer-identity">
+                <div class="footer-brand"><span class="footer-mark"><i></i><i></i><i></i></span><strong>ARX</strong> Reportes</div>
+                <p>Información clara para tomar mejores decisiones.</p>
+            </div>
+            <nav class="footer-nav" aria-label="Navegación del pie de página">
+                <a asp-controller="Home" asp-action="Index">Reportes</a>
+                @if (User.IsInRole("Admin"))
+                {
+                    <a asp-controller="AdminReports" asp-action="Index">Administrar</a>
+                    <a asp-controller="Connections" asp-action="Index">Conexiones</a>
+                    <a asp-controller="Users" asp-action="Index">Usuarios</a>
+                }
+                else
+                {
+                    @if (User.Identity?.IsAuthenticated != true)
+                    {
+                        <a asp-controller="Account" asp-action="Login">Iniciar sesión</a>
+                        <a asp-controller="AdminAccount" asp-action="Login">Administración</a>
+                    }
+                }
+            </nav>
+            <div class="footer-copy">© @DateTime.Now.Year ARX Reportes</div>
+        </div>
+    </footer>
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

@@ -1,0 +1,40 @@
+@model UserEditViewModel
+@{ var isNew = Model.Id == Guid.Empty; ViewData["Title"] = isNew ? "Nuevo usuario" : "Editar usuario"; }
+<div class="page-heading"><div><span class="eyebrow">SEGURIDAD</span><h1>@ViewData["Title"]</h1><p>Configura sus datos de acceso y los reportes que podrá consultar.</p></div></div>
+<form method="post" class="panel form-panel">
+    <input asp-for="Id" type="hidden" />
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+    <div class="row g-4">
+        <div class="col-md-6"><label asp-for="DisplayName" class="form-label"></label><input asp-for="DisplayName" class="form-control" /><span asp-validation-for="DisplayName" class="text-danger"></span></div>
+        <div class="col-md-6"><label asp-for="UserName" class="form-label"></label><input asp-for="UserName" class="form-control" autocomplete="off" /><span asp-validation-for="UserName" class="text-danger"></span></div>
+        <div class="col-md-6"><label asp-for="Password" class="form-label"></label><input asp-for="Password" class="form-control" autocomplete="new-password" placeholder="@(isNew ? "Mínimo 8 caracteres" : "Dejar vacío para conservar")" /><span asp-validation-for="Password" class="text-danger"></span></div>
+        <div class="col-md-6"><label asp-for="ConfirmPassword" class="form-label"></label><input asp-for="ConfirmPassword" class="form-control" autocomplete="new-password" /><span asp-validation-for="ConfirmPassword" class="text-danger"></span></div>
+        <div class="col-12"><div class="form-check form-switch"><input asp-for="IsActive" class="form-check-input" /><label asp-for="IsActive" class="form-check-label"></label></div></div>
+    </div>
+
+    <div class="section-heading">
+        <div><h2>Permisos de reportes</h2><p>Selecciona los reportes que aparecerán en el catálogo de este usuario.</p></div>
+        <div class="d-flex gap-2"><button class="btn btn-sm btn-outline-secondary" id="clear-reports" type="button">Ninguno</button><button class="btn btn-sm btn-outline-primary" id="select-reports" type="button">Seleccionar todos</button></div>
+    </div>
+    <div class="permission-grid">
+        @if (Model.Reports.Count == 0) { <div class="parameter-empty">Primero debes crear al menos un reporte.</div> }
+        @foreach (var report in Model.Reports)
+        {
+            var selected = Model.AllowedReportIds.Contains(report.Id);
+            <label class="permission-card @(report.IsActive ? "" : "is-inactive")">
+                <input class="form-check-input report-permission" type="checkbox" name="AllowedReportIds" value="@report.Id" checked="@selected" />
+                <span><strong>@report.Name</strong><small>@(report.IsActive ? "Publicado" : "Reporte inactivo")</small></span>
+            </label>
+        }
+    </div>
+    <div class="form-actions"><a class="btn btn-light" asp-action="Index">Cancelar</a><button class="btn btn-primary" type="submit">Guardar usuario</button></div>
+</form>
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        const permissions=[...document.querySelectorAll('.report-permission')];
+        document.getElementById('select-reports')?.addEventListener('click',()=>permissions.forEach(item=>item.checked=true));
+        document.getElementById('clear-reports')?.addEventListener('click',()=>permissions.forEach(item=>item.checked=false));
+    </script>
+}
+

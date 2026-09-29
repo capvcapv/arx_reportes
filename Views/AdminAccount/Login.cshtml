@@ -1,0 +1,19 @@
+@model AdminLoginViewModel
+@{ ViewData["Title"] = "Acceso administrativo"; }
+<div class="login-wrap">
+    <div class="panel login-card">
+        <div class="login-visual" role="img" aria-label="Documentos con gráficas de reportes"></div>
+        <div class="login-form">
+            <span class="eyebrow">ÁREA RESTRINGIDA</span>
+            <h1 class="h3 mt-2">Administración</h1>
+            <p class="text-muted">Ingresa la clave configurada para administrar conexiones y reportes.</p>
+            <form method="post">
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+                <input asp-for="ReturnUrl" type="hidden" />
+                <div class="mb-3"><label asp-for="Password" class="form-label">Clave administrativa</label><input asp-for="Password" type="password" class="form-control form-control-lg" autofocus required /></div>
+        <button class="btn btn-primary w-100" type="submit">Ingresar</button>
+        </form>
+        <div class="admin-access-link"><a asp-controller="Account" asp-action="Login">Acceso para usuarios</a></div>
+    </div>
+</div>
+</div>
