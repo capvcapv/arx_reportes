@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="es-MX">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Documentación de ARX Reportes: instalación, publicación, conexiones SQL Server, reportes, parámetros, usuarios y uso con CONTPAQi.">
+    <meta name="theme-color" content="#123f33">
+    <title>Documentación | ARX Reportes</title>
+    <link rel="icon" href="assets/images/arx-reportes-logo.png">
+    <link rel="stylesheet" href="assets/styles.css">
+</head>
+<body class="docs-page">
+    <a class="skip-link" href="#contenido">Saltar al contenido</a>
+    <header class="site-header">
+        <div class="nav-shell">
+            <a class="brand" href="index.html" aria-label="ARX Reportes, inicio"><img src="assets/images/arx-reportes-logo.png" alt="ARX Reportes" width="700" height="259"></a>
+            <button class="menu-button" type="button" aria-expanded="false" aria-controls="site-menu"><span></span><span></span><span></span><span class="sr-only">Abrir menú</span></button>
+            <nav class="site-menu" id="site-menu" aria-label="Navegación principal"><a href="index.html#funciones">Funciones</a><a href="index.html#contpaqi">CONTPAQi</a><a href="index.html#como-funciona">Cómo funciona</a><a class="active" href="documentacion.html">Documentación</a><a class="nav-cta" href="index.html#comenzar">Comenzar</a></nav>
+        </div>
+    </header>
+
+    <main id="contenido">
+        <section class="docs-hero">
+            <div class="section-shell">
+                <p class="eyebrow">CENTRO DE AYUDA</p>
+                <h1>Documentación de ARX Reportes</h1>
+                <p>Instala, configura y publica tus primeros reportes con una guía clara, desde la conexión SQL hasta los permisos de cada usuario.</p>
+                <label class="docs-search"><span aria-hidden="true">⌕</span><span class="sr-only">Buscar en la documentación</span><input type="search" id="docs-search" placeholder="Buscar: parámetros, IIS, respaldos…" autocomplete="off"></label>
+            </div>
+        </section>
+
+        <div class="section-shell docs-layout">
+            <aside class="docs-sidebar" aria-label="Contenido de la documentación">
+                <b>En esta guía</b>
+                <nav>
+                    <a href="#introduccion">Introducción</a>
+                    <a href="#inicio-rapido">Inicio rápido</a>
+                    <a href="#publicacion">Publicación en Windows</a>
+                    <a href="#conexiones">Conexiones SQL Server</a>
+                    <a href="#reportes">Creación de reportes</a>
+                    <a href="#parametros">Parámetros</a>
+                    <a href="#presentacion">Totales y destacados</a>
+                    <a href="#usuarios">Usuarios y permisos</a>
+                    <a href="#transferencia">Importar y exportar</a>
+                    <a href="#contpaqi">Uso con CONTPAQi</a>
+                    <a href="#seguridad">Seguridad y respaldos</a>
+                    <a href="#problemas">Solución de problemas</a>
+                </nav>
+            </aside>
+
+            <article class="docs-content">
+                <section id="introduccion" data-doc-section>
+                    <p class="doc-kicker">CONCEPTOS BÁSICOS</p>
+                    <h2>¿Qué es ARX Reportes?</h2>
+                    <p>Es una aplicación web que convierte sentencias de consulta de SQL Server en reportes disponibles desde el navegador. Un administrador prepara la consulta y sus filtros; el usuario final solamente captura parámetros, visualiza resultados y exporta a Excel.</p>
+                    <div class="callout callout-green"><b>Uso libre</b><p>ARX Reportes puede utilizarse sin cargos por usuario. Se instala en infraestructura propia y la información permanece bajo el control de la organización.</p></div>
+                    <h3>Capacidades principales</h3>
+                    <ul>
+                        <li>Múltiples conexiones e instancias de SQL Server.</li>
+                        <li>Consultas que comienzan con <code>SELECT</code> o <code>WITH</code>.</li>
+                        <li>Parámetros manuales o seleccionados desde un catálogo SQL.</li>
+                        <li>Usuarios con permisos individuales por reporte.</li>
+                        <li>Sumatorias, filas destacadas y exportación a Excel.</li>
+                        <li>Transferencia de reportes mediante archivos JSON.</li>
+                    </ul>
+                </section>
+
+                <section id="inicio-rapido" data-doc-section>
+                    <p class="doc-kicker">PRIMERA EJECUCIÓN</p>
+                    <h2>Inicio rápido</h2>
+                    <p>Para desarrollo o una prueba local necesitas el SDK de .NET compatible con la versión del proyecto y acceso de red a SQL Server.</p>
+                    <ol class="doc-steps">
+                        <li><span>1</span><div><b>Configura la clave administrativa</b><p>Define una contraseña segura mediante la variable <code>Admin__Password</code>. No conserves la contraseña inicial al publicar.</p></div></li>
+                        <li><span>2</span><div><b>Inicia la aplicación</b><div class="code-block"><button class="copy-code" type="button">Copiar</button><pre><code>dotnet restore
+dotnet run</code></pre></div></div></li>
+                        <li><span>3</span><div><b>Abre la dirección mostrada</b><p>Entra a Administración, registra una conexión y utiliza el botón de prueba antes de crear reportes.</p></div></li>
+                    </ol>
+                </section>
+
+                <section id="publicacion" data-doc-section>
+                    <p class="doc-kicker">SERVIDOR DEL CLIENTE</p>
+                    <h2>Publicación en Windows</h2>
+                    <p>Para generar un paquete independiente para Windows de 64 bits, ejecuta desde la carpeta del proyecto:</p>
+                    <div class="code-block"><button class="copy-code" type="button">Copiar</button><pre><code>dotnet publish -c Release \
+  -r win-x64 \
+  --self-contained true \
+  -o ./publish/win-x64</code></pre></div>
+                    <p>Copia todo el contenido de <code>publish/win-x64</code> al servidor. Para una prueba temporal puedes iniciar <code>ArxReportes.exe</code>; para operación permanente utiliza IIS, un Application Pool exclusivo y un certificado HTTPS.</p>
+                    <h3>Permiso necesario</h3>
+                    <p>La identidad que ejecuta el sitio necesita permiso de modificación únicamente sobre <code>App_Data</code>, ya que ahí se guarda el catálogo y las llaves de protección.</p>
+                    <div class="callout callout-amber"><b>Al actualizar</b><p>Detén el sitio, respalda la instalación y reemplaza los binarios, pero conserva <code>App_Data</code>. Esa carpeta contiene la configuración de la instalación.</p></div>
+                </section>
+
+                <section id="conexiones" data-doc-section>
+                    <p class="doc-kicker">ORIGEN DE DATOS</p>
+                    <h2>Conexiones SQL Server</h2>
+                    <p>Desde <b>Administración → Conexiones</b> registra un nombre descriptivo, servidor o instancia, base de datos y método de autenticación.</p>
+                    <table class="docs-table">
+                        <thead><tr><th>Campo</th><th>Ejemplo</th><th>Uso</th></tr></thead>
+                        <tbody>
+                            <tr><td>Servidor</td><td><code>SERVIDOR\COMPAC</code></td><td>Nombre o dirección de la instancia.</td></tr>
+                            <tr><td>Base de datos</td><td><code>adEmpresa_Ejemplo</code></td><td>Base sobre la que se ejecutarán las consultas.</td></tr>
+                            <tr><td>Usuario SQL</td><td><code>arx_lectura</code></td><td>Cuenta dedicada, preferentemente de sólo lectura.</td></tr>
+                            <tr><td>Cifrado</td><td>Activado</td><td>Protege el tráfico hacia SQL Server.</td></tr>
+                        </tbody>
+                    </table>
+                    <p>El botón <b>Consultar bases</b> muestra únicamente las bases visibles para las credenciales capturadas. Siempre utiliza <b>Probar conexión</b> antes de guardar.</p>
+                </section>
+
+                <section id="reportes" data-doc-section>
+                    <p class="doc-kicker">DISEÑADOR</p>
+                    <h2>Creación de reportes</h2>
+                    <p>Cada reporte tiene nombre, descripción, conexión, sentencia SQL, tiempo máximo de ejecución, orden y estado. Por seguridad funcional, la consulta debe iniciar con <code>SELECT</code> o <code>WITH</code>.</p>
+                    <div class="code-block"><button class="copy-code" type="button">Copiar</button><pre><code>SELECT
+    D.CFOLIO AS Folio,
+    D.CFECHA AS Fecha,
+    D.CRAZONSOCIAL AS Cliente,
+    D.CTOTAL AS Total
+FROM admDocumentos AS D
+WHERE D.CFECHA BETWEEN @FechaInicial AND @FechaFinal
+ORDER BY D.CFECHA DESC;</code></pre></div>
+                    <div class="callout"><b>Usa parámetros</b><p>No concatenes texto capturado por el usuario dentro de la consulta. Escribe <code>@NombreParametro</code> y registra el mismo nombre, sin <code>@</code>, en la configuración.</p></div>
+                </section>
+
+                <section id="parametros" data-doc-section>
+                    <p class="doc-kicker">FILTROS</p>
+                    <h2>Parámetros disponibles</h2>
+                    <p>Los parámetros permiten reutilizar una consulta sin pedir al usuario que modifique SQL.</p>
+                    <div class="parameter-doc-grid">
+                        <div><b>Texto</b><span>Códigos, nombres o estados.</span></div><div><b>Entero</b><span>Identificadores y cantidades completas.</span></div><div><b>Decimal</b><span>Importes, porcentajes o medidas.</span></div><div><b>Fecha</b><span>Día inicial, final o fecha de corte.</span></div><div><b>FechaHora</b><span>Fecha con hora precisa.</span></div><div><b>Booleano</b><span>Opciones Sí o No.</span></div><div><b>Consulta</b><span>Selección tomada de otro catálogo SQL.</span></div>
+                    </div>
+                    <h3>Parámetro obtenido desde otra consulta</h3>
+                    <p>Utiliza el tipo <b>Consulta</b> para que el usuario seleccione un cliente, concepto u otro registro sin conocer su identificador interno.</p>
+                    <div class="code-block"><button class="copy-code" type="button">Copiar</button><pre><code>SELECT
+    CIDCLIENTEPROVEEDOR,
+    CCODIGOCLIENTE,
+    CRAZONSOCIAL
+FROM admClientes
+ORDER BY CRAZONSOCIAL;</code></pre></div>
+                    <p>Configura <code>CIDCLIENTEPROVEEDOR</code> como columna de valor y <code>CCODIGOCLIENTE, CRAZONSOCIAL</code> como columnas visibles.</p>
+                </section>
+
+                <section id="presentacion" data-doc-section>
+                    <p class="doc-kicker">PRESENTACIÓN</p>
+                    <h2>Sumatorias y filas destacadas</h2>
+                    <h3>Sumatorias</h3>
+                    <p>Activa <b>Mostrar sumatorias de columnas numéricas</b> para agregar un pie con el acumulado de cada columna numérica.</p>
+                    <h3>Destacar filas</h3>
+                    <p>En <b>Valores de la primera columna que se destacarán</b>, escribe un valor por línea. Cuando la primera columna coincida, la fila recibirá un sombreado especial tanto en pantalla como en Excel.</p>
+                    <div class="value-example"><span>SUMA 80%</span><span>SUMA 20%</span><span>TOTAL COBRANZA CORRIENTE</span></div>
+                    <p>La comparación ignora mayúsculas, minúsculas y espacios exteriores, pero el resto del texto debe coincidir.</p>
+                </section>
+
+                <section id="usuarios" data-doc-section>
+                    <p class="doc-kicker">ACCESO</p>
+                    <h2>Usuarios y permisos</h2>
+                    <p>Desde <b>Administración → Usuarios</b> puedes crear cuentas, activarlas o desactivarlas y elegir individualmente qué reportes verá cada persona.</p>
+                    <ul>
+                        <li>El administrador conserva acceso a la configuración completa.</li>
+                        <li>El usuario final sólo encuentra reportes que le fueron asignados.</li>
+                        <li>Las rutas directas vuelven a comprobar el permiso en cada solicitud.</li>
+                        <li>Las contraseñas de usuarios se guardan como hash y no pueden recuperarse.</li>
+                    </ul>
+                </section>
+
+                <section id="transferencia" data-doc-section>
+                    <p class="doc-kicker">PORTABILIDAD</p>
+                    <h2>Importar y exportar reportes</h2>
+                    <p>En la tabla administrativa, descarga un reporte como JSON. El archivo contiene SQL, parámetros, totales, destacados y demás opciones, pero nunca incluye credenciales ni cadenas de conexión.</p>
+                    <p>Para importarlo en otra instalación puedes seleccionar el archivo o pegar directamente su contenido. El sistema genera un nuevo identificador y añade fecha y hora al nombre para evitar reemplazos accidentales.</p>
+                    <div class="callout callout-green"><b>Guía para IA</b><p>Descarga la guía JSON incluida en la sección de reportes y entrégala a una IA junto con el esquema autorizado de tu base. La guía describe el contrato completo de importación.</p></div>
+                </section>
+
+                <section id="contpaqi" data-doc-section>
+                    <p class="doc-kicker">CONTPAQi + SQL SERVER</p>
+                    <h2>Uso con bases de CONTPAQi</h2>
+                    <p>ARX Reportes es útil para explotar información operativa alojada en SQL Server por productos CONTPAQi. Puedes construir reportes sobre documentos, clientes, conceptos y clasificaciones disponibles en tu empresa.</p>
+                    <div class="callout callout-amber"><b>Proyecto independiente</b><p>No es un producto oficial ni una integración certificada por CONTPAQi. Los nombres de tablas y columnas pueden cambiar según producto, versión o configuración.</p></div>
+                    <h3>Recomendaciones</h3>
+                    <ol>
+                        <li>Trabaja primero sobre una copia o ambiente de pruebas.</li>
+                        <li>Solicita al responsable de sistemas una cuenta SQL dedicada de sólo lectura.</li>
+                        <li>Evita consultas sin filtros sobre tablas grandes.</li>
+                        <li>Valida importes, cancelaciones y relaciones contra reportes conocidos.</li>
+                        <li>No realices <code>INSERT</code>, <code>UPDATE</code>, <code>DELETE</code> ni cambios de esquema.</li>
+                    </ol>
+                    <div class="code-block"><button class="copy-code" type="button">Copiar</button><pre><code>SELECT TOP (100)
+    CIDCLIENTEPROVEEDOR,
+    CCODIGOCLIENTE,
+    CRAZONSOCIAL
+FROM admClientes
+ORDER BY CRAZONSOCIAL;</code></pre></div>
+                </section>
+
+                <section id="seguridad" data-doc-section>
+                    <p class="doc-kicker">OPERACIÓN RESPONSABLE</p>
+                    <h2>Seguridad y respaldos</h2>
+                    <ul class="security-list">
+                        <li><span>01</span><div><b>Cuenta SQL de sólo lectura</b><p>La protección más importante ocurre en SQL Server. Concede únicamente acceso a las bases y objetos necesarios.</p></div></li>
+                        <li><span>02</span><div><b>HTTPS obligatorio</b><p>Instala un certificado válido cuando el sitio esté disponible en la red.</p></div></li>
+                        <li><span>03</span><div><b>Respalda App_Data</b><p>Guarda juntos <code>catalog.json</code> y la carpeta <code>keys</code>. Sin las llaves no podrán descifrarse las contraseñas SQL protegidas.</p></div></li>
+                        <li><span>04</span><div><b>Actualiza credenciales</b><p>Cambia la contraseña administrativa inicial y desactiva usuarios que ya no requieren acceso.</p></div></li>
+                    </ul>
+                </section>
+
+                <section id="problemas" data-doc-section>
+                    <p class="doc-kicker">DIAGNÓSTICO</p>
+                    <h2>Solución de problemas</h2>
+                    <div class="troubleshooting">
+                        <details><summary>No conecta con SQL Server<span>+</span></summary><p>Confirma servidor e instancia, credenciales, nombre de base, protocolo TCP/IP, firewall y que SQL Server acepte el método de autenticación elegido.</p></details>
+                        <details><summary>El usuario no ve un reporte<span>+</span></summary><p>Comprueba que el reporte y la conexión estén activos, y que el reporte esté marcado en los permisos de ese usuario.</p></details>
+                        <details><summary>Una lista de opciones aparece vacía<span>+</span></summary><p>Ejecuta la consulta de opciones directamente en SQL Server y verifica que la columna configurada como valor exista en el resultado.</p></details>
+                        <details><summary>Error al publicar dentro de /publish<span>+</span></summary><p>La carpeta <code>publish/**</code> debe permanecer excluida de los elementos del proyecto para evitar que una publicación anterior se incluya recursivamente.</p></details>
+                    </div>
+                </section>
+
+                <div class="doc-end"><span>¿Listo para probarlo?</span><a href="index.html#comenzar">Volver a comenzar →</a></div>
+                <p class="no-results" hidden>No encontramos una sección con ese término.</p>
+            </article>
+        </div>
+    </main>
+
+    <footer class="site-footer docs-footer">
+        <div class="section-shell footer-bottom"><span>© <span data-year></span> ARX Reportes</span><span>Proyecto independiente · Uso libre</span></div>
+    </footer>
+    <script src="assets/site.js"></script>
+</body>
+</html>
