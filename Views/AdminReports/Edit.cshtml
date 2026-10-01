@@ -3,7 +3,7 @@
 @{ var isNew = string.IsNullOrWhiteSpace(Model.Report.Name); ViewData["Title"] = isNew ? "Nuevo reporte" : "Editar reporte"; }
 <div class="page-heading"><div><span class="eyebrow">DISEÑADOR</span><h1>@ViewData["Title"]</h1><p>Define la consulta parametrizada y los campos que verá el usuario.</p></div></div>
 <form method="post" class="panel form-panel">
-    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div><div class="row g-4">
+    <div asp-validation-summary="All" class="alert alert-danger"></div><div class="row g-4">
         <div class="col-md-8"><label asp-for="Report.Name" class="form-label"></label><input asp-for="Report.Name" class="form-control" /><span asp-validation-for="Report.Name" class="text-danger"></span></div>
         <div class="col-md-4"><label asp-for="Report.ConnectionId" class="form-label"></label><select asp-for="Report.ConnectionId" asp-items="Model.Connections" class="form-select"><option value="">Selecciona…</option></select><span asp-validation-for="Report.ConnectionId" class="text-danger"></span></div>
         <div class="col-12"><label asp-for="Report.Description" class="form-label"></label><input asp-for="Report.Description" class="form-control" /><span asp-validation-for="Report.Description" class="text-danger"></span></div>
@@ -19,22 +19,53 @@
             <span asp-validation-for="HighlightFirstColumnValuesText" class="text-danger"></span>
         </div>
     </div>
-    <div class="section-heading"><div><h2>Parámetros</h2><p>El nombre debe coincidir con el usado en SQL, sin el signo @@.</p></div><button class="btn btn-sm btn-outline-primary" id="add-parameter" type="button">+ Agregar parámetro</button></div>
+    <div class="section-heading"><div><h2>Parámetros</h2><p>El nombre debe coincidir con el usado en SQL, sin el signo @@.</p></div><button class="btn btn-sm btn-outline-primary" id="add-parameter" type="button"><span class="btn-icon" aria-hidden="true">＋</span><span>Agregar parámetro</span></button></div>
     <div id="parameters" class="parameter-list">@for (var index = 0; index < Model.Report.Parameters.Count; index++) { <partial name="_ParameterRow" model="(Model.Report.Parameters[index], index)" /> }</div>
     <div id="no-parameters" class="parameter-empty @(Model.Report.Parameters.Count > 0 ? "d-none" : "")">Este reporte no solicita parámetros.</div>
-    <div class="form-actions"><a class="btn btn-light" asp-action="Index">Cancelar</a><button class="btn btn-primary" type="submit">Guardar reporte</button></div>
+
+    <div class="section-heading"><div><h2>KPI dentro del reporte</h2><p>Se calculan con las filas obtenidas después de aplicar los parámetros del usuario.</p></div><button class="btn btn-sm btn-outline-primary" id="add-report-kpi" type="button"><span class="btn-icon" aria-hidden="true">＋</span><span>Agregar KPI</span></button></div>
+    <div class="report-kpi-help mb-3"><strong>Ejemplo:</strong> nombre “Total facturado”, columna <code>Total</code>, cálculo “Suma” y formato “Moneda”. Para contar todas las filas, elige “Conteo” y deja la columna vacía.</div>
+    <div id="report-kpis" class="report-kpi-config-list">@for (var index = 0; index < Model.Report.ReportKpis.Count; index++) { <partial name="_ReportKpiRow" model="(Model.Report.ReportKpis[index], index)" /> }</div>
+    <div id="no-report-kpis" class="parameter-empty @(Model.Report.ReportKpis.Count > 0 ? "d-none" : "")">Este reporte aún no muestra indicadores.</div>
+
+    <div class="section-heading"><div><h2>Desglose hacia otros reportes</h2><p>Convierte una columna del resultado en un enlace y pasa el valor de la fila a un parámetro del reporte destino.</p></div><button class="btn btn-sm btn-outline-primary" id="add-drilldown" type="button"><span class="btn-icon" aria-hidden="true">＋</span><span>Agregar desglose</span></button></div>
+    <div class="report-kpi-help mb-3"><strong>Ejemplo:</strong> haz clicable <code>Cliente</code>, envía <code>ClienteId</code> y abre el reporte “Documentos del cliente” en su parámetro <code>@@ClienteId</code>. Si “Valor a enviar” queda vacío, se enviará la misma columna clicable.</div>
+    <div id="drilldowns" class="drilldown-config-list">@for (var index = 0; index < Model.Report.Drilldowns.Count; index++)
+    {
+        <partial name="_DrilldownRow" model="new ReportDrilldownEditRowViewModel { Drilldown = Model.Report.Drilldowns[index], Index = index, TargetReports = Model.TargetReports }" />
+    }</div>
+    <div id="no-drilldowns" class="parameter-empty @(Model.Report.Drilldowns.Count > 0 ? "d-none" : "")">Este reporte aún no tiene enlaces de desglose.</div>
+    <div class="form-actions"><a class="btn btn-light" asp-action="Index"><span class="btn-icon" aria-hidden="true">←</span><span>Cancelar</span></a><button class="btn btn-primary" type="submit"><span class="btn-icon" aria-hidden="true">✓</span><span>Guardar reporte</span></button></div>
 </form>
 <template id="parameter-template"><div class="parameter-row">
     <div><label class="form-label">Nombre</label><input data-field="Name" class="form-control" placeholder="FechaInicio" required /></div><div><label class="form-label">Etiqueta</label><input data-field="Label" class="form-control" placeholder="Fecha inicial" required /></div>
     <div><label class="form-label">Tipo</label><select data-field="Type" class="form-select parameter-type">@foreach (var type in Enum.GetValues<ReportParameterType>()) { <option value="@type">@type</option> }</select></div>
     <div><label class="form-label">Predeterminado</label><input data-field="DefaultValue" class="form-control" /></div><div><label class="form-label">Ayuda</label><input data-field="Placeholder" class="form-control" /></div>
-    <div class="d-flex align-items-end gap-3"><div class="form-check mb-2"><input data-field="IsRequired" type="checkbox" class="form-check-input" value="true" /><label class="form-check-label">Obligatorio</label></div><button type="button" class="btn btn-sm btn-outline-danger remove-parameter mb-1">Quitar</button></div>
+    <div class="d-flex align-items-end gap-3"><div class="form-check mb-2"><input data-field="IsRequired" type="checkbox" class="form-check-input" value="true" /><label class="form-check-label">Obligatorio</label></div><button type="button" class="btn btn-sm btn-outline-danger remove-parameter mb-1"><span class="btn-icon" aria-hidden="true">×</span><span>Quitar</span></button></div>
     <div class="lookup-config d-none">
         <div class="lookup-query"><label class="form-label">Consulta para llenar la lista</label><textarea data-field="LookupSql" class="form-control" rows="4" spellcheck="false" placeholder="SELECT CIDCLIENTEPROVEEDOR, CCODIGOCLIENTE, CRAZONSOCIAL FROM admClientes ORDER BY CRAZONSOCIAL"></textarea></div>
         <div><label class="form-label">Columna de valor</label><input data-field="LookupValueColumn" class="form-control" placeholder="CIDCLIENTEPROVEEDOR" /></div>
         <div><label class="form-label">Columnas visibles</label><input data-field="LookupDisplayColumns" class="form-control" placeholder="CCODIGOCLIENTE, CRAZONSOCIAL" /><div class="form-text">Sepáralas con comas.</div></div>
         <div><label class="form-label">Tipo del valor</label><select data-field="LookupValueType" class="form-select">@foreach (var type in Enum.GetValues<LookupValueType>()) { <option value="@type">@type</option> }</select></div>
     </div>
+</div></template>
+<template id="report-kpi-template"><div class="report-kpi-config-row">
+    <div><label class="form-label">Nombre</label><input data-kpi-field="Name" class="form-control" placeholder="Total facturado" required /></div>
+    <div><label class="form-label">Columna</label><input data-kpi-field="ColumnName" class="form-control report-kpi-column" placeholder="Total" /></div>
+    <div><label class="form-label">Cálculo</label><select data-kpi-field="Operation" class="form-select report-kpi-operation">@foreach (var option in Html.GetEnumSelectList<ReportKpiOperation>()) { <option value="@option.Value">@option.Text</option> }</select></div>
+    <div><label class="form-label">Formato</label><select data-kpi-field="Format" class="form-select">@foreach (var option in Html.GetEnumSelectList<ReportKpiValueFormat>()) { <option value="@option.Value">@option.Text</option> }</select></div>
+    <div><label class="form-label">Decimales</label><input data-kpi-field="DecimalPlaces" value="0" class="form-control" type="number" min="0" max="4" /></div>
+    <div><label class="form-label">Color</label><select data-kpi-field="Tone" class="form-select">@foreach (var option in Html.GetEnumSelectList<KpiTone>()) { <option value="@option.Value">@option.Text</option> }</select></div>
+    <div><label class="form-label">Icono</label><select data-kpi-field="Icon" class="form-select">@foreach (var option in Html.GetEnumSelectList<KpiIcon>()) { <option value="@option.Value">@option.Text</option> }</select></div>
+    <div class="report-kpi-remove"><button type="button" class="btn btn-sm btn-outline-danger remove-report-kpi"><span class="btn-icon" aria-hidden="true">×</span><span>Quitar</span></button></div>
+</div></template>
+<template id="drilldown-template"><div class="drilldown-config-row">
+    <div><label class="form-label">Columna clicable</label><input data-drilldown-field="SourceColumn" class="form-control" placeholder="Cliente" required /></div>
+    <div><label class="form-label">Valor a enviar</label><input data-drilldown-field="ValueColumn" class="form-control" placeholder="ClienteId (opcional)" /></div>
+    <div><label class="form-label">Reporte destino</label><select data-drilldown-field="TargetReportId" class="form-select drilldown-target" required><option value="">Selecciona…</option>@foreach (var target in Model.TargetReports) { <option value="@target.Id" data-parameters="@string.Join("|", target.ParameterNames)">@target.Name@(!target.IsActive ? " (inactivo)" : "")</option> }</select></div>
+    <div><label class="form-label">Parámetro destino</label><select data-drilldown-field="TargetParameterName" class="form-select drilldown-parameter" required><option value="">Selecciona el reporte…</option></select></div>
+    <div class="drilldown-switches"><div class="form-check form-switch"><input data-drilldown-field="AutoExecute" class="form-check-input" type="checkbox" value="true" checked /><label class="form-check-label">Ejecutar</label></div><div class="form-check form-switch"><input data-drilldown-field="OpenInNewTab" class="form-check-input" type="checkbox" value="true" /><label class="form-check-label">Nueva pestaña</label></div></div>
+    <div class="drilldown-remove"><button type="button" class="btn btn-sm btn-outline-danger remove-drilldown"><span class="btn-icon" aria-hidden="true">×</span><span>Quitar</span></button></div>
 </div></template>
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
@@ -45,5 +76,47 @@
         document.getElementById('add-parameter').addEventListener('click',()=>{list.append(document.getElementById('parameter-template').content.cloneNode(true));reindex();});
         list.addEventListener('click',event=>{if(event.target.closest('.remove-parameter')){event.target.closest('.parameter-row').remove();reindex();}});
         list.addEventListener('change',event=>{if(event.target.matches('.parameter-type'))toggleLookup(event.target.closest('.parameter-row'));});reindex();
+
+        const reportKpiList=document.getElementById('report-kpis'),reportKpiEmpty=document.getElementById('no-report-kpis'),addReportKpi=document.getElementById('add-report-kpi');
+        function updateReportKpiRow(row){
+            const operation=row.querySelector('.report-kpi-operation')?.value;
+            const column=row.querySelector('.report-kpi-column');
+            if(!column)return;
+            column.required=operation!=='2';
+            column.placeholder=operation==='2'?'Vacío = todas las filas':'Nombre exacto de la columna';
+        }
+        function reindexReportKpis(){
+            const rows=[...reportKpiList.querySelectorAll('.report-kpi-config-row')];
+            rows.forEach((row,index)=>{row.querySelectorAll('[data-kpi-field]').forEach(input=>input.name=`Report.ReportKpis[${index}].${input.dataset.kpiField}`);updateReportKpiRow(row);});
+            reportKpiEmpty.classList.toggle('d-none',rows.length>0);
+            addReportKpi.disabled=rows.length>=12;
+            addReportKpi.title=rows.length>=12?'Máximo 12 KPI por reporte':'';
+        }
+        addReportKpi.addEventListener('click',()=>{if(reportKpiList.children.length>=12)return;reportKpiList.append(document.getElementById('report-kpi-template').content.cloneNode(true));reindexReportKpis();});
+        reportKpiList.addEventListener('click',event=>{if(event.target.closest('.remove-report-kpi')){event.target.closest('.report-kpi-config-row').remove();reindexReportKpis();}});
+        reportKpiList.addEventListener('change',event=>{if(event.target.matches('.report-kpi-operation'))updateReportKpiRow(event.target.closest('.report-kpi-config-row'));});
+        reindexReportKpis();
+
+        const drilldownList=document.getElementById('drilldowns'),drilldownEmpty=document.getElementById('no-drilldowns'),addDrilldown=document.getElementById('add-drilldown');
+        function updateDrilldownParameters(row,keepSelection=true){
+            const target=row.querySelector('.drilldown-target'),parameter=row.querySelector('.drilldown-parameter');
+            if(!target||!parameter)return;
+            const selected=keepSelection?(parameter.dataset.selected||parameter.value):'';
+            const names=(target.selectedOptions[0]?.dataset.parameters||'').split('|').filter(Boolean);
+            parameter.replaceChildren(new Option(names.length?'Selecciona…':'El reporte no tiene parámetros',''));
+            names.forEach(name=>parameter.add(new Option(`@@${name}`,name,false,name.toLowerCase()===selected.toLowerCase())));
+            parameter.dataset.selected=parameter.value;
+        }
+        function reindexDrilldowns(){
+            const rows=[...drilldownList.querySelectorAll('.drilldown-config-row')];
+            rows.forEach((row,index)=>{row.querySelectorAll('[data-drilldown-field]').forEach(input=>input.name=`Report.Drilldowns[${index}].${input.dataset.drilldownField}`);updateDrilldownParameters(row,true);});
+            drilldownEmpty.classList.toggle('d-none',rows.length>0);
+            addDrilldown.disabled=rows.length>=20;
+            addDrilldown.title=rows.length>=20?'Máximo 20 enlaces de desglose por reporte':'';
+        }
+        addDrilldown.addEventListener('click',()=>{if(drilldownList.children.length>=20)return;drilldownList.append(document.getElementById('drilldown-template').content.cloneNode(true));reindexDrilldowns();});
+        drilldownList.addEventListener('click',event=>{if(event.target.closest('.remove-drilldown')){event.target.closest('.drilldown-config-row').remove();reindexDrilldowns();}});
+        drilldownList.addEventListener('change',event=>{if(event.target.matches('.drilldown-target')){const row=event.target.closest('.drilldown-config-row');row.querySelector('.drilldown-parameter').dataset.selected='';updateDrilldownParameters(row,false);}if(event.target.matches('.drilldown-parameter'))event.target.dataset.selected=event.target.value;});
+        reindexDrilldowns();
     </script>
 }

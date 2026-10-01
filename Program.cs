@@ -13,10 +13,14 @@ public class Program
         var builder = WebApplication.CreateBuilder(args);
 
         builder.Services.AddControllersWithViews();
+        builder.Services.AddMemoryCache();
         builder.Services.AddDataProtection()
             .PersistKeysToFileSystem(new DirectoryInfo(Path.Combine(builder.Environment.ContentRootPath, "App_Data", "keys")));
         builder.Services.AddSingleton<CatalogStore>();
         builder.Services.AddScoped<SqlReportRunner>();
+        builder.Services.AddScoped<SqlKpiRunner>();
+        builder.Services.AddScoped<SqlChartRunner>();
+        builder.Services.AddSingleton<ReportKpiCalculator>();
         builder.Services.AddSingleton<IPasswordHasher<UserDefinition>, PasswordHasher<UserDefinition>>();
         builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
             .AddCookie(options =>

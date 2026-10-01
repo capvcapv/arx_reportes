@@ -1,0 +1,51 @@
+@model ChartEditViewModel
+@using ArxReportes.Models
+@{
+    var isNew = string.IsNullOrWhiteSpace(Model.Chart.Name);
+    ViewData["Title"] = isNew ? "Nueva gráfica" : "Editar gráfica";
+}
+<div class="page-heading"><div><span class="eyebrow">VISUALIZACIÓN</span><h1>@ViewData["Title"]</h1><p>La consulta debe devolver una fila por categoría y, opcionalmente, por serie.</p></div></div>
+<form method="post" class="panel form-panel">
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+    <div class="row g-4">
+        <div class="col-md-7"><label asp-for="Chart.Name" class="form-label"></label><input asp-for="Chart.Name" class="form-control" placeholder="Facturación mensual" /><span asp-validation-for="Chart.Name" class="text-danger"></span></div>
+        <div class="col-md-5"><label asp-for="Chart.ConnectionId" class="form-label"></label><select asp-for="Chart.ConnectionId" asp-items="Model.Connections" class="form-select"><option value="">Selecciona…</option></select><span asp-validation-for="Chart.ConnectionId" class="text-danger"></span></div>
+        <div class="col-12"><label asp-for="Chart.Description" class="form-label"></label><input asp-for="Chart.Description" class="form-control" placeholder="Comportamiento de las ventas durante el año" /><span asp-validation-for="Chart.Description" class="text-danger"></span></div>
+        <div class="col-12">
+            <label asp-for="Chart.Sql" class="form-label"></label>
+            <textarea asp-for="Chart.Sql" class="form-control sql-editor" rows="10" spellcheck="false" placeholder="SELECT Mes AS Etiqueta, Total AS Valor, Sucursal AS Serie FROM ..."></textarea>
+            <div class="form-text">Sólo se aceptan SELECT o WITH. Agrupa y ordena los datos desde SQL; no se admiten parámetros porque la gráfica se actualiza automáticamente.</div>
+            <span asp-validation-for="Chart.Sql" class="text-danger"></span>
+        </div>
+    </div>
+
+    <div class="section-heading"><div><h2>Columnas del resultado</h2><p>Etiqueta y valor son obligatorias. Serie permite comparar varias líneas o grupos.</p></div></div>
+    <div class="row g-4">
+        <div class="col-md-4"><label asp-for="Chart.LabelColumn" class="form-label"></label><input asp-for="Chart.LabelColumn" class="form-control" placeholder="Etiqueta" /><div class="form-text">Mes, cliente, categoría, sucursal…</div><span asp-validation-for="Chart.LabelColumn" class="text-danger"></span></div>
+        <div class="col-md-4"><label asp-for="Chart.ValueColumn" class="form-label"></label><input asp-for="Chart.ValueColumn" class="form-control" placeholder="Valor" /><div class="form-text">Debe ser una columna numérica.</div><span asp-validation-for="Chart.ValueColumn" class="text-danger"></span></div>
+        <div class="col-md-4"><label asp-for="Chart.SeriesColumn" class="form-label"></label><input asp-for="Chart.SeriesColumn" class="form-control" placeholder="Serie (opcional)" /><div class="form-text">Ejemplo: empresa, año o vendedor.</div><span asp-validation-for="Chart.SeriesColumn" class="text-danger"></span></div>
+    </div>
+
+    <div class="section-heading"><div><h2>Presentación</h2><p>Define el tipo de visualización y cómo se mostrarán sus valores.</p></div></div>
+    <div class="row g-4">
+        <div class="col-md-3"><label asp-for="Chart.Type" class="form-label"></label><select asp-for="Chart.Type" asp-items="Html.GetEnumSelectList<ChartType>()" class="form-select"></select></div>
+        <div class="col-md-3"><label asp-for="Chart.Format" class="form-label"></label><select asp-for="Chart.Format" asp-items="Html.GetEnumSelectList<ChartValueFormat>()" class="form-select"></select></div>
+        <div class="col-md-3"><label asp-for="Chart.DecimalPlaces" class="form-label"></label><input asp-for="Chart.DecimalPlaces" class="form-control" /><span asp-validation-for="Chart.DecimalPlaces" class="text-danger"></span></div>
+        <div class="col-md-3"><label asp-for="Chart.Palette" class="form-label"></label><select asp-for="Chart.Palette" asp-items="Html.GetEnumSelectList<ChartPalette>()" class="form-select"></select></div>
+        <div class="col-md-4"><label asp-for="Chart.Size" class="form-label"></label><select asp-for="Chart.Size" asp-items="Html.GetEnumSelectList<ChartSize>()" class="form-select"></select></div>
+        <div class="col-md-4"><label asp-for="Chart.LinkedReportId" class="form-label"></label><select asp-for="Chart.LinkedReportId" asp-items="Model.Reports" class="form-select"><option value="">Sin reporte relacionado</option></select><div class="form-text">Se mostrará un botón para abrir el detalle.</div></div>
+        <div class="col-md-4 d-flex align-items-end"><div class="form-check form-switch mb-2"><input asp-for="Chart.ShowLegend" class="form-check-input" /><label asp-for="Chart.ShowLegend" class="form-check-label"></label></div></div>
+    </div>
+
+    <div class="section-heading"><div><h2>Actualización</h2><p>Controla el tiempo de consulta, caché, orden y visibilidad.</p></div></div>
+    <div class="row g-4">
+        <div class="col-md-3"><label asp-for="Chart.CommandTimeoutSeconds" class="form-label"></label><input asp-for="Chart.CommandTimeoutSeconds" class="form-control" /><span asp-validation-for="Chart.CommandTimeoutSeconds" class="text-danger"></span></div>
+        <div class="col-md-3"><label asp-for="Chart.CacheMinutes" class="form-label"></label><input asp-for="Chart.CacheMinutes" class="form-control" /><div class="form-text">0 ejecuta siempre; recomendado: 5.</div><span asp-validation-for="Chart.CacheMinutes" class="text-danger"></span></div>
+        <div class="col-md-3"><label asp-for="Chart.DisplayOrder" class="form-label"></label><input asp-for="Chart.DisplayOrder" class="form-control" /><span asp-validation-for="Chart.DisplayOrder" class="text-danger"></span></div>
+        <div class="col-md-3 d-flex align-items-end"><div class="form-check form-switch mb-2"><input asp-for="Chart.IsActive" class="form-check-input" /><label asp-for="Chart.IsActive" class="form-check-label"></label></div></div>
+    </div>
+    <div class="kpi-query-example mt-4"><strong>Ejemplo mínimo</strong><code>SELECT CONVERT(VARCHAR(7), CFECHA, 120) AS Etiqueta, SUM(CTOTAL) AS Valor FROM admDocumentos WHERE CCANCELADO = 0 GROUP BY CONVERT(VARCHAR(7), CFECHA, 120) ORDER BY Etiqueta;</code></div>
+    <div class="kpi-query-example mt-2"><strong>Con varias series</strong><code>SELECT CAST(MONTH(CFECHA) AS VARCHAR(2)) AS Etiqueta, SUM(CTOTAL) AS Valor, CAST(YEAR(CFECHA) AS VARCHAR(4)) AS Serie FROM admDocumentos GROUP BY YEAR(CFECHA), MONTH(CFECHA) ORDER BY YEAR(CFECHA), MONTH(CFECHA);</code></div>
+    <div class="form-actions"><a class="btn btn-light" asp-action="Index"><span class="btn-icon" aria-hidden="true">←</span><span>Cancelar</span></a><button class="btn btn-primary" type="submit"><span class="btn-icon" aria-hidden="true">✓</span><span>Guardar gráfica</span></button></div>
+</form>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

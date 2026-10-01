@@ -15,7 +15,7 @@
         <div class="nav-shell">
             <a class="brand" href="index.html" aria-label="ARX Reportes, inicio"><img src="assets/images/arx-reportes-logo.png" alt="ARX Reportes" width="700" height="259"></a>
             <button class="menu-button" type="button" aria-expanded="false" aria-controls="site-menu"><span></span><span></span><span></span><span class="sr-only">Abrir menú</span></button>
-            <nav class="site-menu" id="site-menu" aria-label="Navegación principal"><a href="index.html#funciones">Funciones</a><a href="index.html#contpaqi">CONTPAQi</a><a href="index.html#como-funciona">Cómo funciona</a><a class="active" href="documentacion.html">Documentación</a><a class="nav-cta" href="index.html#comenzar">Comenzar</a></nav>
+            <nav class="site-menu" id="site-menu" aria-label="Navegación principal"><a href="index.html#producto">Producto</a><a href="index.html#contpaqi">CONTPAQi</a><a href="index.html#como-funciona">Cómo funciona</a><a class="active" href="documentacion.html">Documentación</a><a class="nav-cta github-button" href="https://github.com/capvcapv/arx_reportes" target="_blank" rel="noopener noreferrer"><img src="assets/images/github-mark.svg" alt="" aria-hidden="true"> GitHub</a></nav>
         </div>
     </header>
 
@@ -54,6 +54,10 @@
                     <h2>¿Qué es ARX Reportes?</h2>
                     <p>Es una aplicación web que convierte sentencias de consulta de SQL Server en reportes disponibles desde el navegador. Un administrador prepara la consulta y sus filtros; el usuario final solamente captura parámetros, visualiza resultados y exporta a Excel.</p>
                     <div class="callout callout-green"><b>Uso libre</b><p>ARX Reportes puede utilizarse sin cargos por usuario. Se instala en infraestructura propia y la información permanece bajo el control de la organización.</p></div>
+                    <div class="repo-card">
+                        <div><span>REPOSITORIO PÚBLICO</span><b>capvcapv/arx_reportes</b><p>Consulta el código, descarga una copia o clona el proyecto directamente desde GitHub.</p></div>
+                        <a class="button button-primary github-button" href="https://github.com/capvcapv/arx_reportes" target="_blank" rel="noopener noreferrer"><img src="assets/images/github-mark.svg" alt="" aria-hidden="true"> Abrir en GitHub</a>
+                    </div>
                     <h3>Capacidades principales</h3>
                     <ul>
                         <li>Múltiples conexiones e instancias de SQL Server.</li>
@@ -68,12 +72,14 @@
                 <section id="inicio-rapido" data-doc-section>
                     <p class="doc-kicker">PRIMERA EJECUCIÓN</p>
                     <h2>Inicio rápido</h2>
-                    <p>Para desarrollo o una prueba local necesitas el SDK de .NET compatible con la versión del proyecto y acceso de red a SQL Server.</p>
+                    <p>Para desarrollo o una prueba local necesitas Git, el SDK de .NET compatible con la versión del proyecto y acceso de red a SQL Server.</p>
                     <ol class="doc-steps">
-                        <li><span>1</span><div><b>Configura la clave administrativa</b><p>Define una contraseña segura mediante la variable <code>Admin__Password</code>. No conserves la contraseña inicial al publicar.</p></div></li>
-                        <li><span>2</span><div><b>Inicia la aplicación</b><div class="code-block"><button class="copy-code" type="button">Copiar</button><pre><code>dotnet restore
+                        <li><span>1</span><div><b>Descarga o clona el repositorio</b><p>Abre GitHub para <a href="https://github.com/capvcapv/arx_reportes/archive/refs/heads/main.zip">descargar el ZIP</a>, o clónalo desde una terminal:</p><div class="code-block"><button class="copy-code" type="button">Copiar</button><pre><code>git clone https://github.com/capvcapv/arx_reportes.git
+cd arx_reportes</code></pre></div></div></li>
+                        <li><span>2</span><div><b>Configura la clave administrativa</b><p>Define una contraseña segura mediante la variable <code>Admin__Password</code>. No conserves la contraseña inicial al publicar.</p></div></li>
+                        <li><span>3</span><div><b>Inicia la aplicación</b><div class="code-block"><button class="copy-code" type="button">Copiar</button><pre><code>dotnet restore
 dotnet run</code></pre></div></div></li>
-                        <li><span>3</span><div><b>Abre la dirección mostrada</b><p>Entra a Administración, registra una conexión y utiliza el botón de prueba antes de crear reportes.</p></div></li>
+                        <li><span>4</span><div><b>Abre la dirección mostrada</b><p>Entra a Administración, registra una conexión y utiliza el botón de prueba antes de crear reportes.</p></div></li>
                     </ol>
                 </section>
 

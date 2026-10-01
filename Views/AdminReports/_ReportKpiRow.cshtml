@@ -1,0 +1,13 @@
+@model ValueTuple<ReportKpiDefinition, int>
+@using ArxReportes.Models
+@{ var kpi = Model.Item1; var index = Model.Item2; }
+<div class="report-kpi-config-row">
+    <div><label class="form-label">Nombre</label><input name="Report.ReportKpis[@index].Name" data-kpi-field="Name" value="@kpi.Name" class="form-control" placeholder="Total facturado" required /></div>
+    <div><label class="form-label">Columna</label><input name="Report.ReportKpis[@index].ColumnName" data-kpi-field="ColumnName" value="@kpi.ColumnName" class="form-control report-kpi-column" placeholder="Total" /></div>
+    <div><label class="form-label">Cálculo</label><select name="Report.ReportKpis[@index].Operation" data-kpi-field="Operation" class="form-select report-kpi-operation">@foreach (var option in Html.GetEnumSelectList<ReportKpiOperation>()) { <option value="@option.Value" selected="@(option.Value == ((int)kpi.Operation).ToString())">@option.Text</option> }</select></div>
+    <div><label class="form-label">Formato</label><select name="Report.ReportKpis[@index].Format" data-kpi-field="Format" class="form-select">@foreach (var option in Html.GetEnumSelectList<ReportKpiValueFormat>()) { <option value="@option.Value" selected="@(option.Value == ((int)kpi.Format).ToString())">@option.Text</option> }</select></div>
+    <div><label class="form-label">Decimales</label><input name="Report.ReportKpis[@index].DecimalPlaces" data-kpi-field="DecimalPlaces" value="@kpi.DecimalPlaces" class="form-control" type="number" min="0" max="4" /></div>
+    <div><label class="form-label">Color</label><select name="Report.ReportKpis[@index].Tone" data-kpi-field="Tone" class="form-select">@foreach (var option in Html.GetEnumSelectList<KpiTone>()) { <option value="@option.Value" selected="@(option.Value == ((int)kpi.Tone).ToString())">@option.Text</option> }</select></div>
+    <div><label class="form-label">Icono</label><select name="Report.ReportKpis[@index].Icon" data-kpi-field="Icon" class="form-select">@foreach (var option in Html.GetEnumSelectList<KpiIcon>()) { <option value="@option.Value" selected="@(option.Value == ((int)kpi.Icon).ToString())">@option.Text</option> }</select></div>
+    <div class="report-kpi-remove"><button type="button" class="btn btn-sm btn-outline-danger remove-report-kpi"><span class="btn-icon" aria-hidden="true">×</span><span>Quitar</span></button></div>
+</div>

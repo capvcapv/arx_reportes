@@ -34,7 +34,9 @@ public sealed class UsersController(CatalogStore store, IPasswordHasher<UserDefi
             UserName = user.UserName,
             DisplayName = user.DisplayName,
             IsActive = user.IsActive,
-            AllowedReportIds = [.. user.AllowedReportIds]
+            AllowedReportIds = [.. user.AllowedReportIds],
+            AllowedKpiIds = [.. user.AllowedKpiIds],
+            AllowedChartIds = [.. user.AllowedChartIds]
         };
         return View(await BuildViewModelAsync(model, cancellationToken));
     }
@@ -68,7 +70,11 @@ public sealed class UsersController(CatalogStore store, IPasswordHasher<UserDefi
         if (!isNew && existing is null) return NotFound();
 
         var validReportIds = data.Reports.Select(x => x.Id).ToHashSet();
+        var validKpiIds = data.Kpis.Select(x => x.Id).ToHashSet();
+        var validChartIds = data.Charts.Select(x => x.Id).ToHashSet();
         model.AllowedReportIds = model.AllowedReportIds.Distinct().Where(validReportIds.Contains).ToList();
+        model.AllowedKpiIds = model.AllowedKpiIds.Distinct().Where(validKpiIds.Contains).ToList();
+        model.AllowedChartIds = model.AllowedChartIds.Distinct().Where(validChartIds.Contains).ToList();
         if (!ModelState.IsValid)
             return View("Edit", await BuildViewModelAsync(model, cancellationToken));
 
@@ -77,6 +83,8 @@ public sealed class UsersController(CatalogStore store, IPasswordHasher<UserDefi
         user.DisplayName = model.DisplayName;
         user.IsActive = model.IsActive;
         user.AllowedReportIds = [.. model.AllowedReportIds];
+        user.AllowedKpiIds = [.. model.AllowedKpiIds];
+        user.AllowedChartIds = [.. model.AllowedChartIds];
         if (!string.IsNullOrWhiteSpace(model.Password))
             user.PasswordHash = passwordHasher.HashPassword(user, model.Password);
 
@@ -91,6 +99,14 @@ public sealed class UsersController(CatalogStore store, IPasswordHasher<UserDefi
         model.Reports = data.Reports
             .OrderBy(x => x.DisplayOrder).ThenBy(x => x.Name)
             .Select(x => new ReportPermissionItem(x.Id, x.Name, x.IsActive))
+            .ToList();
+        model.Kpis = data.Kpis
+            .OrderBy(x => x.DisplayOrder).ThenBy(x => x.Name)
+            .Select(x => new KpiPermissionItem(x.Id, x.Name, x.IsActive))
+            .ToList();
+        model.Charts = data.Charts
+            .OrderBy(x => x.DisplayOrder).ThenBy(x => x.Name)
+            .Select(x => new ChartPermissionItem(x.Id, x.Name, x.IsActive))
             .ToList();
         return model;
     }

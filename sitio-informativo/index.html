@@ -3,13 +3,13 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="ARX Reportes transforma consultas de SQL Server en reportes web con parámetros, permisos y exportación a Excel. Ideal para aprovechar información de CONTPAQi.">
-    <meta name="theme-color" content="#123f33">
-    <title>ARX Reportes | Tus datos, listos para decidir</title>
+    <meta name="description" content="ARX Reportes convierte consultas de SQL Server y datos de CONTPAQi en reportes web claros, seguros y exportables a Excel. Uso libre.">
+    <meta name="theme-color" content="#f5f5f1">
+    <title>ARX Reportes | Tus datos, claros</title>
     <link rel="icon" href="assets/images/arx-reportes-logo.png">
     <link rel="stylesheet" href="assets/styles.css">
 </head>
-<body>
+<body class="home-page">
     <a class="skip-link" href="#contenido">Saltar al contenido</a>
 
     <header class="site-header" id="inicio">
@@ -21,181 +21,189 @@
                 <span></span><span></span><span></span><span class="sr-only">Abrir menú</span>
             </button>
             <nav class="site-menu" id="site-menu" aria-label="Navegación principal">
-                <a href="#funciones">Funciones</a>
+                <a href="#producto">Producto</a>
                 <a href="#contpaqi">CONTPAQi</a>
                 <a href="#como-funciona">Cómo funciona</a>
                 <a href="documentacion.html">Documentación</a>
-                <a class="nav-cta" href="#comenzar">Comenzar</a>
+                <a class="nav-cta github-button" href="https://github.com/capvcapv/arx_reportes" target="_blank" rel="noopener noreferrer">
+                    <img src="assets/images/github-mark.svg" alt="" aria-hidden="true"> GitHub
+                </a>
             </nav>
         </div>
     </header>
 
     <main id="contenido">
-        <section class="hero section-shell">
-            <div class="hero-copy">
-                <div class="pill"><span></span> Uso libre · Sin costo por usuario</div>
-                <p class="eyebrow">REPORTES WEB PARA SQL SERVER</p>
-                <h1>Tus datos de <em>CONTPAQi</em>, listos para decidir.</h1>
-                <p class="hero-lead">Convierte consultas SQL en reportes claros, filtrables y exportables a Excel. Publica la información que tu equipo necesita sin darle acceso directo a la base de datos.</p>
+        <section class="cinematic-hero">
+            <div class="hero-center section-shell">
+                <div class="availability"><i></i> Código abierto para todos</div>
+                <p class="eyebrow">ARX REPORTES PARA SQL SERVER</p>
+                <h1>De datos complejos.<br><span>A respuestas claras.</span></h1>
+                <p>Publica consultas de SQL Server como reportes web con filtros, permisos y exportación a Excel. Una forma simple de aprovechar la información que ya existe en tu empresa.</p>
                 <div class="hero-actions">
-                    <a class="button button-primary" href="documentacion.html">Ver documentación <span aria-hidden="true">→</span></a>
-                    <a class="button button-secondary" href="#funciones">Conocer funciones</a>
-                </div>
-                <div class="hero-proof" aria-label="Características principales">
-                    <span><b>✓</b> Instalación propia</span>
-                    <span><b>✓</b> Control de usuarios</span>
-                    <span><b>✓</b> Tus datos permanecen contigo</span>
+                    <a class="button button-primary github-button" href="https://github.com/capvcapv/arx_reportes" target="_blank" rel="noopener noreferrer">
+                        <img src="assets/images/github-mark.svg" alt="" aria-hidden="true"> Obtener en GitHub
+                    </a>
+                    <a class="button button-quiet" href="documentacion.html">Explorar documentación <span aria-hidden="true">›</span></a>
                 </div>
             </div>
 
-            <div class="hero-product" aria-label="Vista ilustrativa de un reporte">
-                <div class="product-window">
-                    <div class="window-bar"><span></span><span></span><span></span><small>Resumen de cobranza</small></div>
+            <div class="hero-canvas section-wide" id="producto">
+                <img class="hero-photo" src="assets/images/reportes-hero.jpg" alt="Reportes ejecutivos impresos sobre un escritorio verde" width="1942" height="809">
+                <div class="product-window product-window-large" aria-label="Vista ilustrativa de un reporte de cobranza">
+                    <div class="window-bar"><span></span><span></span><span></span><small>Resumen de cobranza</small><b>ARX</b></div>
                     <div class="metric-row">
                         <div><small>Facturado</small><strong>$138,373,300</strong><span>Periodo actual</span></div>
                         <div><small>Por facturar</small><strong>$33,887,808</strong><span>Pedidos pendientes</span></div>
+                        <div><small>Saldo total</small><strong>$172,261,109</strong><span>Actualizado ahora</span></div>
                     </div>
                     <div class="mock-table" role="presentation">
-                        <div class="mock-head"><span>Cliente</span><span>Facturado</span><span>Saldo total</span></div>
-                        <div><span>GRUPO FRAGUA</span><span>$48,526,964</span><span>$67,510,939</span></div>
-                        <div><span>GRUPO PISA</span><span>$31,485,448</span><span>$38,065,891</span></div>
-                        <div><span>CHIVAS EVENTOS</span><span>$23,943,232</span><span>$23,943,232</span></div>
-                        <div class="mock-highlight"><span>SUMA 80%</span><span>$121,398,475</span><span>$155,191,764</span></div>
+                        <div class="mock-head"><span>Cliente</span><span>Facturado</span><span>Por facturar</span><span>Saldo total</span></div>
+                        <div><span>DISTRIBUIDORA NORTE</span><span>$48,526,964</span><span>$18,983,975</span><span>$67,510,939</span></div>
+                        <div><span>COMERCIAL DEL CENTRO</span><span>$31,485,448</span><span>$6,580,442</span><span>$38,065,891</span></div>
+                        <div><span>SERVICIOS INDUSTRIALES</span><span>$23,943,232</span><span>—</span><span>$23,943,232</span></div>
+                        <div class="mock-highlight"><span>SUMA 80%</span><span>$121,398,475</span><span>$33,793,288</span><span>$155,191,764</span></div>
                     </div>
-                    <div class="window-foot"><span><i></i> Consulta completada</span><button type="button" tabindex="-1">Exportar a Excel</button></div>
+                    <div class="window-foot"><span><i></i> Consulta completada en 1.24 s</span><button type="button" tabindex="-1">Exportar a Excel</button></div>
                 </div>
-                <div class="floating-note"><span>↗</span><div><b>Información útil</b><small>Sin hojas manuales</small></div></div>
             </div>
         </section>
 
-        <section class="trust-strip" aria-label="Resumen de tecnología">
-            <div class="section-shell trust-grid">
-                <p><strong>SQL Server</strong><span>Conexión configurable</span></p>
-                <p><strong>Excel</strong><span>Exportación inmediata</span></p>
-                <p><strong>100%</strong><span>Administrado por ti</span></p>
-                <p><strong>Web</strong><span>Acceso desde el navegador</span></p>
-            </div>
+        <section class="big-statement section-shell">
+            <p class="eyebrow">MENOS FRICCIÓN. MÁS INFORMACIÓN.</p>
+            <h2>Tu equipo no necesita aprender SQL.<br><span>Necesita ver el resultado.</span></h2>
+            <p>El administrador diseña una vez. Los usuarios autorizados consultan cuantas veces necesiten.</p>
         </section>
 
-        <section class="section section-shell" id="funciones">
-            <div class="section-intro split-intro">
+        <section class="editorial-story section-wide story-paper">
+            <div class="story-copy">
+                <span class="story-index">01</span>
+                <p class="eyebrow">DISEÑA UNA VEZ</p>
+                <h2>Convierte cada consulta en una herramienta.</h2>
+                <p>Agrega parámetros de texto, fechas, importes o catálogos completos obtenidos desde SQL. ARX Reportes transforma la sentencia en una experiencia sencilla y repetible.</p>
+                <div class="inline-code"><span>SQL</span><code>WHERE ClienteId = @ClienteId</code></div>
+            </div>
+            <figure class="story-image story-image-tall">
+                <img src="assets/images/analytics-screen.jpg" alt="Análisis de información y gráficas en una computadora" width="1600" height="2400" loading="lazy">
+                <figcaption>Filtros claros. Datos precisos.</figcaption>
+            </figure>
+        </section>
+
+        <section class="dark-showcase">
+            <div class="section-shell dark-intro">
                 <div>
-                    <p class="eyebrow">UNA CAPA SIMPLE SOBRE TUS DATOS</p>
-                    <h2>De una sentencia SQL a un reporte listo para compartir.</h2>
+                    <p class="eyebrow">VE SÓLO LO QUE IMPORTA</p>
+                    <h2>La información correcta.<br>Para la persona correcta.</h2>
                 </div>
-                <p>ARX Reportes concentra la configuración, ejecución y distribución de consultas frecuentes en una interfaz amigable para usuarios administrativos y operativos.</p>
+                <p>Crea usuarios, asigna reportes individualmente y conserva las credenciales y sentencias fuera de la vista del usuario final.</p>
             </div>
-            <div class="feature-grid">
-                <article class="feature-card feature-card-primary">
-                    <span class="feature-number">01</span>
-                    <h3>Reportes parametrizados</h3>
-                    <p>Define filtros de texto, fechas, números, valores lógicos o catálogos obtenidos desde otra consulta.</p>
-                    <div class="mini-code"><code>WHERE ClienteId = @ClienteId</code></div>
-                </article>
-                <article class="feature-card">
-                    <span class="feature-icon" aria-hidden="true">▦</span>
-                    <h3>Resultados claros</h3>
-                    <p>Presenta los datos en tablas HTML, agrega sumatorias y destaca filas relevantes por el valor de su primera columna.</p>
-                </article>
-                <article class="feature-card">
-                    <span class="feature-icon" aria-hidden="true">⇩</span>
-                    <h3>Excel en un clic</h3>
-                    <p>Descarga el resultado conservando encabezados, formatos numéricos, totales y filas resaltadas.</p>
-                </article>
-                <article class="feature-card">
-                    <span class="feature-icon" aria-hidden="true">◎</span>
-                    <h3>Permisos por usuario</h3>
-                    <p>Decide qué reportes puede ejecutar cada persona, sin exponer la consola administrativa.</p>
-                </article>
-                <article class="feature-card">
-                    <span class="feature-icon" aria-hidden="true">⇄</span>
-                    <h3>Reportes portables</h3>
-                    <p>Exporta e importa definiciones en JSON para mover reportes entre instalaciones o prepararlos con ayuda de una IA.</p>
-                </article>
-            </div>
-        </section>
-
-        <section class="section contpaqi-section" id="contpaqi">
-            <div class="section-shell contpaqi-grid">
-                <div class="contpaqi-visual">
-                    <img src="assets/images/admin-reportes.jpg" alt="Espacio de trabajo profesional con reportes" width="933" height="1400" loading="lazy">
-                    <div class="data-card data-card-a"><small>Documento</small><strong>admDocumentos</strong></div>
-                    <div class="data-card data-card-b"><small>Catálogo</small><strong>admClientes</strong></div>
-                </div>
-                <div class="contpaqi-copy">
-                    <p class="eyebrow">ESPECIALMENTE ÚTIL CON CONTPAQi</p>
-                    <h2>Aprovecha mejor la información que ya genera tu empresa.</h2>
-                    <p>Si tu instalación de CONTPAQi utiliza SQL Server y cuentas con acceso autorizado a sus datos, ARX Reportes puede publicar consultas sobre tablas y vistas disponibles para construir tableros operativos, cobranza, ventas, inventarios y más.</p>
-                    <ul class="check-list">
-                        <li><span>✓</span><div><b>Sin modificar CONTPAQi</b><small>Opera como una aplicación independiente de consulta.</small></div></li>
-                        <li><span>✓</span><div><b>Consultas adaptadas a tu empresa</b><small>Utiliza el esquema, clasificaciones y conceptos que ya manejas.</small></div></li>
-                        <li><span>✓</span><div><b>Acceso controlado</b><small>El usuario final ve el reporte, no las credenciales ni la sentencia SQL.</small></div></li>
-                    </ul>
-                    <div class="notice"><b>Importante:</b> las estructuras pueden variar según producto, versión y configuración. Usa una cuenta SQL de sólo lectura y valida cada consulta con tu responsable técnico.</div>
+            <div class="section-wide access-visual">
+                <img src="assets/images/report-analysis.jpg" alt="Profesional revisando reportes y datos junto a una computadora" width="1600" height="2400" loading="lazy">
+                <div class="access-panel">
+                    <div class="access-panel-head"><span>Permisos del usuario</span><b>Analista de cobranza</b></div>
+                    <div class="permission-line on"><i>✓</i><span>Resumen de cobranza</span><small>Permitido</small></div>
+                    <div class="permission-line on"><i>✓</i><span>Documentos pendientes</span><small>Permitido</small></div>
+                    <div class="permission-line"><i>—</i><span>Administración</span><small>Sin acceso</small></div>
+                    <div class="access-foot"><span></span> Acceso controlado por reporte</div>
                 </div>
             </div>
         </section>
 
-        <section class="section section-shell" id="como-funciona">
-            <div class="section-intro centered">
-                <p class="eyebrow">DE LA CONEXIÓN AL RESULTADO</p>
-                <h2>Cuatro pasos. Cero complicaciones para el usuario final.</h2>
+        <section class="contpaqi-experience" id="contpaqi">
+            <div class="section-shell contpaqi-heading">
+                <p class="eyebrow">HECHO PARA TRABAJAR CON TUS DATOS</p>
+                <h2>Una nueva ventana a<br><span>CONTPAQi.</span></h2>
+                <p>Cuando tu instalación utiliza SQL Server y cuentas con acceso autorizado, ARX Reportes convierte información operativa en vistas de cobranza, ventas, inventarios, documentos y clientes.</p>
             </div>
-            <ol class="steps">
-                <li><span>1</span><div><h3>Conecta</h3><p>Registra tu instancia de SQL Server y selecciona la base de datos.</p></div></li>
-                <li><span>2</span><div><h3>Configura</h3><p>Crea el reporte, pega tu consulta y define sus parámetros.</p></div></li>
-                <li><span>3</span><div><h3>Autoriza</h3><p>Crea usuarios y elige los reportes disponibles para cada uno.</p></div></li>
-                <li><span>4</span><div><h3>Ejecuta</h3><p>El usuario filtra, consulta y exporta el resultado a Excel.</p></div></li>
-            </ol>
-        </section>
-
-        <section class="section docs-preview" id="documentacion">
-            <div class="section-shell docs-grid">
-                <div>
-                    <p class="eyebrow">DOCUMENTACIÓN INCLUIDA</p>
-                    <h2>Todo lo necesario para comenzar y operar con confianza.</h2>
-                    <p>Consulta los requisitos, instalación, publicación en IIS, conexiones, creación de reportes, parámetros de catálogo, usuarios, respaldos y recomendaciones de seguridad.</p>
-                    <a class="text-link" href="documentacion.html">Abrir documentación completa <span aria-hidden="true">→</span></a>
-                </div>
-                <div class="docs-index">
-                    <a href="documentacion.html#inicio-rapido"><span>01</span><div><b>Inicio rápido</b><small>Instalación y primera ejecución</small></div><i>→</i></a>
-                    <a href="documentacion.html#reportes"><span>02</span><div><b>Crear reportes</b><small>SQL, parámetros y presentación</small></div><i>→</i></a>
-                    <a href="documentacion.html#contpaqi"><span>03</span><div><b>Uso con CONTPAQi</b><small>Buenas prácticas y ejemplos</small></div><i>→</i></a>
-                    <a href="documentacion.html#seguridad"><span>04</span><div><b>Seguridad y respaldos</b><small>Permisos, credenciales y datos</small></div><i>→</i></a>
-                </div>
+            <div class="contpaqi-scene section-wide">
+                <img src="assets/images/admin-reportes.jpg" alt="Reportes financieros sobre un escritorio de trabajo" width="933" height="1400" loading="lazy">
+                <div class="schema-float schema-one"><small>Origen</small><strong>admDocumentos</strong><span>Facturas · Pedidos · Saldos</span></div>
+                <div class="schema-float schema-two"><small>Catálogo</small><strong>admClientes</strong><span>Código · Razón social · Clasificación</span></div>
+                <div class="schema-float schema-three"><small>Salida</small><strong>Reporte web</strong><span>Tabla · Totales · Excel</span></div>
+            </div>
+            <div class="section-shell safety-note">
+                <b>Independiente y no invasivo.</b>
+                <p>ARX Reportes consulta la información mediante una cuenta SQL configurada por ti. Recomendamos acceso exclusivo de lectura y validación técnica para cada versión y producto de CONTPAQi.</p>
+                <a href="documentacion.html#contpaqi">Leer la guía para CONTPAQi ›</a>
             </div>
         </section>
 
-        <section class="section section-shell" id="comenzar">
-            <div class="cta-panel">
-                <div>
-                    <p class="eyebrow">ABIERTO PARA TODOS</p>
-                    <h2>Haz que tus datos sean fáciles de consultar.</h2>
-                    <p>ARX Reportes puede utilizarse libremente y sin cargos por usuario. Instálalo en tu propia infraestructura y conserva el control de tu información.</p>
-                </div>
-                <a class="button button-light" href="documentacion.html#publicacion">Preparar una instalación <span aria-hidden="true">→</span></a>
+        <section class="bento-section section-shell">
+            <div class="bento-heading">
+                <p class="eyebrow">DETALLES QUE AHORRAN TIEMPO</p>
+                <h2>Todo fluye, desde la consulta hasta Excel.</h2>
+            </div>
+            <div class="bento">
+                <article class="bento-main">
+                    <div><span class="bento-label">RESULTADOS</span><h3>Tablas que se explican solas.</h3><p>Encabezados claros, filas destacadas y sumatorias automáticas para columnas numéricas.</p></div>
+                    <div class="mini-report">
+                        <div><b>Concepto</b><b>Total</b></div>
+                        <div><span>Facturado</span><span>$138.3 M</span></div>
+                        <div><span>Por facturar</span><span>$33.8 M</span></div>
+                        <div class="total"><span>Total corriente</span><span>$172.2 M</span></div>
+                    </div>
+                </article>
+                <article class="bento-green"><span class="bento-label">EXCEL</span><h3>Un clic.<br>Y está listo.</h3><div class="download-orb">↓<small>.xlsx</small></div></article>
+                <article class="bento-light"><span class="bento-label">PORTABILIDAD</span><h3>Mueve reportes, no problemas.</h3><p>Importa y exporta definiciones JSON sin incluir credenciales.</p><div class="json-lines"><i></i><i></i><i></i><i></i></div></article>
             </div>
         </section>
 
-        <section class="section section-shell faq-section">
-            <div class="section-intro centered"><p class="eyebrow">PREGUNTAS FRECUENTES</p><h2>Lo esencial, antes de comenzar.</h2></div>
-            <div class="faq-list">
-                <details><summary>¿ARX Reportes tiene costo por usuario?<span>+</span></summary><p>No. El programa se presenta para uso libre, sin cobro por cada cuenta o reporte configurado.</p></details>
-                <details><summary>¿Es un producto oficial de CONTPAQi?<span>+</span></summary><p>No. ARX Reportes es un proyecto independiente. Puede consultar bases SQL Server utilizadas por soluciones CONTPAQi cuando el propietario cuenta con autorización y acceso técnico.</p></details>
-                <details><summary>¿Los usuarios pueden cambiar las consultas?<span>+</span></summary><p>No. Sólo los administradores configuran conexiones y sentencias. Los usuarios autorizados únicamente capturan parámetros, ejecutan y exportan.</p></details>
-                <details><summary>¿Dónde se almacena la configuración?<span>+</span></summary><p>En la carpeta local <code>App_Data</code> de la instalación. Debe incluirse en la estrategia de respaldos y conservar permisos de escritura para la aplicación.</p></details>
+        <section class="process-section" id="como-funciona">
+            <div class="section-shell">
+                <p class="eyebrow">COMIENZA EN MINUTOS</p>
+                <h2>Cuatro movimientos.<br>Una nueva forma de reportar.</h2>
+                <ol class="process-list">
+                    <li><span>01</span><div><h3>Conecta</h3><p>Registra tu instancia y elige la base de SQL Server.</p></div></li>
+                    <li><span>02</span><div><h3>Diseña</h3><p>Pega la consulta y configura sus parámetros.</p></div></li>
+                    <li><span>03</span><div><h3>Comparte</h3><p>Autoriza los reportes para cada usuario.</p></div></li>
+                    <li><span>04</span><div><h3>Decide</h3><p>Consulta en web y exporta a Excel.</p></div></li>
+                </ol>
+            </div>
+        </section>
+
+        <section class="github-stage" id="descargar">
+            <div class="github-stage-inner section-shell">
+                <img class="github-hero-mark" src="assets/images/github-mark.svg" alt="GitHub" width="24" height="24">
+                <p class="eyebrow">LIBRE. ABIERTO. TUYO.</p>
+                <h2>Descarga el código.<br>Hazlo parte de tu empresa.</h2>
+                <p>ARX Reportes está disponible públicamente en GitHub. Puedes revisarlo, clonarlo y ejecutarlo en tu propia infraestructura sin cargos por usuario.</p>
+                <div class="clone-bar">
+                    <code>git clone https://github.com/capvcapv/arx_reportes.git</code>
+                    <button class="copy-clone" type="button" data-copy="git clone https://github.com/capvcapv/arx_reportes.git">Copiar</button>
+                </div>
+                <div class="github-actions">
+                    <a class="button button-light github-button" href="https://github.com/capvcapv/arx_reportes" target="_blank" rel="noopener noreferrer"><img src="assets/images/github-mark.svg" alt="" aria-hidden="true"> Ver repositorio</a>
+                    <a class="button button-outline-light" href="https://github.com/capvcapv/arx_reportes/archive/refs/heads/main.zip">Descargar ZIP</a>
+                </div>
+            </div>
+        </section>
+
+        <section class="docs-callout section-shell" id="documentacion">
+            <div class="docs-callout-copy">
+                <p class="eyebrow">DOCUMENTACIÓN PASO A PASO</p>
+                <h2>Del primer inicio al servidor del cliente.</h2>
+                <p>Una guía completa para instalar, conectar SQL Server, crear parámetros, configurar usuarios, publicar en IIS y respaldar la aplicación.</p>
+                <a href="documentacion.html">Abrir documentación <span>→</span></a>
+            </div>
+            <div class="docs-stack" aria-label="Temas disponibles en la documentación">
+                <a href="documentacion.html#inicio-rapido"><span>01</span><b>Inicio rápido</b><i>→</i></a>
+                <a href="documentacion.html#reportes"><span>02</span><b>Diseño de reportes</b><i>→</i></a>
+                <a href="documentacion.html#publicacion"><span>03</span><b>Publicación en Windows</b><i>→</i></a>
+                <a href="documentacion.html#seguridad"><span>04</span><b>Seguridad y respaldos</b><i>→</i></a>
             </div>
         </section>
     </main>
 
     <footer class="site-footer">
         <div class="section-shell footer-grid">
-            <div class="footer-brand"><img src="assets/images/arx-reportes-logo.png" alt="ARX Reportes" width="700" height="259"><p>Reportes SQL claros, seguros y fáciles de compartir.</p></div>
-            <div><h2>Producto</h2><a href="#funciones">Funciones</a><a href="#contpaqi">Uso con CONTPAQi</a><a href="#como-funciona">Cómo funciona</a></div>
-            <div><h2>Recursos</h2><a href="documentacion.html">Documentación</a><a href="documentacion.html#publicacion">Publicación</a><a href="documentacion.html#problemas">Solución de problemas</a></div>
+            <div class="footer-brand"><img src="assets/images/arx-reportes-logo.png" alt="ARX Reportes" width="700" height="259"><p>Datos claros para decisiones reales.</p></div>
+            <div><h2>Producto</h2><a href="#producto">Producto</a><a href="#contpaqi">Uso con CONTPAQi</a><a href="#como-funciona">Cómo funciona</a></div>
+            <div><h2>Recursos</h2><a href="https://github.com/capvcapv/arx_reportes" target="_blank" rel="noopener noreferrer">GitHub ↗</a><a href="documentacion.html">Documentación</a><a href="documentacion.html#publicacion">Publicación</a></div>
             <div class="footer-note"><h2>Proyecto independiente</h2><p>CONTPAQi es una marca de sus respectivos propietarios. ARX Reportes no está afiliado, patrocinado ni respaldado oficialmente por CONTPAQi.</p></div>
         </div>
-        <div class="section-shell footer-bottom"><span>© <span data-year></span> ARX Reportes</span><span>Uso libre · Instalación propia</span></div>
+        <div class="section-shell footer-bottom">
+            <span>© <span data-year></span> ARX Reportes · Uso libre</span>
+            <span>Fotografías adicionales: Pexels</span>
+        </div>
     </footer>
 
     <script src="assets/site.js"></script>

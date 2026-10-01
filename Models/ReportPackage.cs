@@ -8,7 +8,7 @@ namespace ArxReportes.Models;
 /// </summary>
 public sealed class ReportPackage
 {
-    public int SchemaVersion { get; set; } = 1;
+    public int SchemaVersion { get; set; } = 3;
     public DateTime ExportedAtUtc { get; set; } = DateTime.UtcNow;
     public string SourceConnectionName { get; set; } = "";
     public PortableReport Report { get; set; } = new();
@@ -25,6 +25,38 @@ public sealed class PortableReport
     public bool ShowColumnTotals { get; set; }
     public List<string> HighlightFirstColumnValues { get; set; } = [];
     public List<PortableReportParameter> Parameters { get; set; } = [];
+    public List<PortableReportKpi> ReportKpis { get; set; } = [];
+    public List<PortableReportDrilldown> Drilldowns { get; set; } = [];
+}
+
+public sealed class PortableReportDrilldown
+{
+    public string SourceColumn { get; set; } = "";
+    public string? ValueColumn { get; set; }
+    public string TargetReportName { get; set; } = "";
+    public string TargetParameterName { get; set; } = "";
+    public bool AutoExecute { get; set; } = true;
+    public bool OpenInNewTab { get; set; }
+}
+
+public sealed class PortableReportKpi
+{
+    public string Name { get; set; } = "";
+    public string? ColumnName { get; set; }
+
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+    public ReportKpiOperation Operation { get; set; } = ReportKpiOperation.Suma;
+
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+    public ReportKpiValueFormat Format { get; set; } = ReportKpiValueFormat.Numero;
+
+    public int DecimalPlaces { get; set; }
+
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+    public KpiTone Tone { get; set; } = KpiTone.Verde;
+
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+    public KpiIcon Icon { get; set; } = KpiIcon.Indicador;
 }
 
 public sealed class PortableReportParameter

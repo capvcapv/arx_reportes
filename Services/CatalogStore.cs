@@ -77,13 +77,55 @@ public sealed class CatalogStore
         }
     }
 
+    public async Task SaveKpiAsync(KpiDefinition value, CancellationToken cancellationToken = default)
+    {
+        await _gate.WaitAsync(cancellationToken);
+        try
+        {
+            var data = await ReadUnsafeAsync(cancellationToken);
+            var existing = data.Kpis.FirstOrDefault(x => x.Id == value.Id);
+            value.CacheVersion = Guid.NewGuid();
+            if (existing is null)
+                data.Kpis.Add(value);
+            else
+                data.Kpis[data.Kpis.IndexOf(existing)] = value;
+            await WriteUnsafeAsync(data, cancellationToken);
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
+    public async Task SaveChartAsync(ChartDefinition value, CancellationToken cancellationToken = default)
+    {
+        await _gate.WaitAsync(cancellationToken);
+        try
+        {
+            var data = await ReadUnsafeAsync(cancellationToken);
+            var existing = data.Charts.FirstOrDefault(x => x.Id == value.Id);
+            value.CacheVersion = Guid.NewGuid();
+            if (existing is null)
+                data.Charts.Add(value);
+            else
+                data.Charts[data.Charts.IndexOf(existing)] = value;
+            await WriteUnsafeAsync(data, cancellationToken);
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
     public async Task<bool> DeleteConnectionAsync(Guid id, CancellationToken cancellationToken = default)
     {
         await _gate.WaitAsync(cancellationToken);
         try
         {
             var data = await ReadUnsafeAsync(cancellationToken);
-            if (data.Reports.Any(x => x.ConnectionId == id)) return false;
+            if (data.Reports.Any(x => x.ConnectionId == id) ||
+                data.Kpis.Any(x => x.ConnectionId == id) ||
+                data.Charts.Any(x => x.ConnectionId == id)) return false;
             data.Connections.RemoveAll(x => x.Id == id);
             await WriteUnsafeAsync(data, cancellationToken);
             return true;
@@ -101,8 +143,46 @@ public sealed class CatalogStore
         {
             var data = await ReadUnsafeAsync(cancellationToken);
             data.Reports.RemoveAll(x => x.Id == id);
+            foreach (var kpi in data.Kpis.Where(x => x.LinkedReportId == id))
+                kpi.LinkedReportId = null;
+            foreach (var chart in data.Charts.Where(x => x.LinkedReportId == id))
+                chart.LinkedReportId = null;
             foreach (var user in data.Users)
                 user.AllowedReportIds.RemoveAll(reportId => reportId == id);
+            await WriteUnsafeAsync(data, cancellationToken);
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
+    public async Task DeleteKpiAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        await _gate.WaitAsync(cancellationToken);
+        try
+        {
+            var data = await ReadUnsafeAsync(cancellationToken);
+            data.Kpis.RemoveAll(x => x.Id == id);
+            foreach (var user in data.Users)
+                user.AllowedKpiIds.RemoveAll(kpiId => kpiId == id);
+            await WriteUnsafeAsync(data, cancellationToken);
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
+    public async Task DeleteChartAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        await _gate.WaitAsync(cancellationToken);
+        try
+        {
+            var data = await ReadUnsafeAsync(cancellationToken);
+            data.Charts.RemoveAll(x => x.Id == id);
+            foreach (var user in data.Users)
+                user.AllowedChartIds.RemoveAll(chartId => chartId == id);
             await WriteUnsafeAsync(data, cancellationToken);
         }
         finally
@@ -124,6 +204,50 @@ public sealed class CatalogStore
             {
                 if (positions.TryGetValue(report.Id, out var position))
                     report.DisplayOrder = position * 10;
+            }
+            await WriteUnsafeAsync(data, cancellationToken);
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
+    public async Task ReorderKpisAsync(IReadOnlyList<Guid> orderedIds, CancellationToken cancellationToken = default)
+    {
+        await _gate.WaitAsync(cancellationToken);
+        try
+        {
+            var data = await ReadUnsafeAsync(cancellationToken);
+            var positions = orderedIds
+                .Select((id, index) => new { id, index })
+                .ToDictionary(x => x.id, x => x.index);
+            foreach (var kpi in data.Kpis)
+            {
+                if (positions.TryGetValue(kpi.Id, out var position))
+                    kpi.DisplayOrder = position * 10;
+            }
+            await WriteUnsafeAsync(data, cancellationToken);
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
+    public async Task ReorderChartsAsync(IReadOnlyList<Guid> orderedIds, CancellationToken cancellationToken = default)
+    {
+        await _gate.WaitAsync(cancellationToken);
+        try
+        {
+            var data = await ReadUnsafeAsync(cancellationToken);
+            var positions = orderedIds
+                .Select((id, index) => new { id, index })
+                .ToDictionary(x => x.id, x => x.index);
+            foreach (var chart in data.Charts)
+            {
+                if (positions.TryGetValue(chart.Id, out var position))
+                    chart.DisplayOrder = position * 10;
             }
             await WriteUnsafeAsync(data, cancellationToken);
         }
@@ -178,7 +302,26 @@ public sealed class CatalogStore
     {
         if (!File.Exists(_filePath)) return new CatalogData();
         await using var stream = File.OpenRead(_filePath);
-        return await JsonSerializer.DeserializeAsync<CatalogData>(stream, _jsonOptions, cancellationToken) ?? new CatalogData();
+        var data = await JsonSerializer.DeserializeAsync<CatalogData>(stream, _jsonOptions, cancellationToken) ?? new CatalogData();
+        data.Connections ??= [];
+        data.Reports ??= [];
+        data.Kpis ??= [];
+        data.Charts ??= [];
+        data.Users ??= [];
+        foreach (var report in data.Reports)
+        {
+            report.Parameters ??= [];
+            report.HighlightFirstColumnValues ??= [];
+            report.ReportKpis ??= [];
+            report.Drilldowns ??= [];
+        }
+        foreach (var user in data.Users)
+        {
+            user.AllowedReportIds ??= [];
+            user.AllowedKpiIds ??= [];
+            user.AllowedChartIds ??= [];
+        }
+        return data;
     }
 
     private async Task WriteUnsafeAsync(CatalogData data, CancellationToken cancellationToken)

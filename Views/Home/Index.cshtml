@@ -1,30 +1,167 @@
-@model IReadOnlyList<ReportDefinition>
-@{ ViewData["Title"] = "Reportes disponibles"; }
+@model DashboardViewModel
+@using System.Globalization
+@using System.Text.Json
+@{ ViewData["Title"] = "Panel de información"; }
 
 <section class="hero mb-5">
     <div class="hero-copy">
         <span class="eyebrow">CENTRO DE INFORMACIÓN</span>
-        <h1>Reportes disponibles</h1>
-        <p>Selecciona un reporte, captura sus parámetros y consulta la información al momento.</p>
+        <h1>Tu información, de un vistazo</h1>
+        <p>Revisa los indicadores principales o abre un reporte para consultar el detalle.</p>
     </div>
 </section>
 
-@if (Model.Count == 0)
+@if (Model.Kpis.Count > 0)
+{
+    <section class="dashboard-kpis" aria-labelledby="kpi-title">
+        <div class="results-heading kpi-heading">
+            <div><span class="eyebrow">RESUMEN</span><h2 id="kpi-title">Indicadores clave</h2><p>Los valores se actualizan automáticamente según la caché configurada.</p></div>
+            <a class="btn btn-sm btn-outline-primary" asp-action="Index" asp-route-refreshKpis="true" asp-route-refreshCharts="true">↻ Actualizar panel</a>
+        </div>
+        <div class="kpi-grid">
+        @foreach (var card in Model.Kpis)
+        {
+            var toneClass = "kpi-tone-" + card.Definition.Tone.ToString().ToLowerInvariant();
+            <article class="kpi-card @toneClass @(card.Error is not null ? "kpi-has-error" : "") @(card.AccessibleReportId.HasValue ? "is-clickable" : "")">
+                @if (card.AccessibleReportId.HasValue)
+                {
+                    <a class="kpi-card-link" asp-controller="Reports" asp-action="Run" asp-route-id="@card.AccessibleReportId" aria-label="Abrir el reporte relacionado con @card.Definition.Name"></a>
+                }
+                <div class="kpi-card-top"><span class="kpi-icon" aria-hidden="true">@IconFor(card.Definition.Icon)</span><span class="kpi-name">@card.Definition.Name</span>@if (card.AccessibleReportId.HasValue) { <span class="kpi-open" aria-hidden="true">↗</span> }</div>
+                @if (card.Error is not null)
+                {
+                    <div class="kpi-value kpi-error-value">No disponible</div>
+                    <div class="kpi-detail">@card.Error</div>
+                }
+                else
+                {
+                    <div class="kpi-value">@card.DisplayValue</div>
+                    <div class="kpi-meta">
+                        @if (card.ChangePercent.HasValue)
+                        {
+                            var arrow = card.ChangePercent.Value >= 0 ? "↑" : "↓";
+                            <span class="kpi-trend @(card.IsPositive == true ? "is-positive" : "is-negative")">@arrow @Math.Abs(card.ChangePercent.Value).ToString("N1", CultureInfo.CurrentCulture)% <small>@(card.Definition.ComparisonLabel ?? "vs. referencia")</small></span>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(card.Detail)) { <span class="kpi-detail">@card.Detail</span> }
+                    </div>
+                }
+                @if (!string.IsNullOrWhiteSpace(card.Definition.Description)) { <p class="kpi-description">@card.Definition.Description</p> }
+                @if (card.UpdatedAtUtc.HasValue) { <time class="kpi-updated" datetime="@card.UpdatedAtUtc.Value.ToString("O")">Actualizado @card.UpdatedAtUtc.Value.ToLocalTime().ToString("HH:mm")</time> }
+            </article>
+        }
+        </div>
+    </section>
+}
+
+@if (Model.Charts.Count > 0)
+{
+    <section class="dashboard-charts" aria-labelledby="charts-title">
+        <div class="results-heading chart-heading">
+            <div><span class="eyebrow">TENDENCIAS</span><h2 id="charts-title">Análisis visual</h2><p>Compara periodos, categorías y series directamente desde tus datos.</p></div>
+            <a class="btn btn-sm btn-outline-primary" asp-action="Index" asp-route-refreshKpis="true" asp-route-refreshCharts="true">↻ Actualizar panel</a>
+        </div>
+        <div class="chart-grid">
+        @foreach (var card in Model.Charts)
+        {
+            var sizeClass = card.Definition.Size == ChartSize.Completa ? "chart-card-full" : "";
+            <article class="chart-card @sizeClass @(card.Error is not null ? "chart-has-error" : "")">
+                <header class="chart-card-header">
+                    <div><span class="chart-type-label">@ChartTypeName(card.Definition.Type)</span><h3>@card.Definition.Name</h3>@if (!string.IsNullOrWhiteSpace(card.Definition.Description)) { <p>@card.Definition.Description</p> }</div>
+                    @if (card.AccessibleReportId.HasValue) { <a class="btn btn-sm btn-outline-primary" asp-controller="Reports" asp-action="Run" asp-route-id="@card.AccessibleReportId">Ver detalle →</a> }
+                </header>
+                @if (card.Error is not null)
+                {
+                    <div class="chart-error"><span aria-hidden="true">!</span><strong>No disponible</strong><small>@card.Error</small></div>
+                }
+                else
+                {
+                    var payload = JsonSerializer.Serialize(new
+                    {
+                        type = card.Definition.Type.ToString().ToLowerInvariant(),
+                        format = card.Definition.Format.ToString().ToLowerInvariant(),
+                        decimals = card.Definition.DecimalPlaces,
+                        palette = card.Definition.Palette.ToString().ToLowerInvariant(),
+                        showLegend = card.Definition.ShowLegend,
+                        labels = card.Labels,
+                        dataSets = card.DataSets.Select(x => new { name = x.Name, values = x.Values })
+                    }, new JsonSerializerOptions(JsonSerializerDefaults.Web));
+                    <div class="arx-chart" data-chart="@payload">
+                        <div class="chart-canvas-frame">
+                            <canvas aria-label="Gráfica @card.Definition.Name" role="img"></canvas>
+                            <div class="chart-tooltip" role="status" aria-live="polite"></div>
+                        </div>
+                        <div class="chart-legend" aria-label="Leyenda"></div>
+                    </div>
+                    <details class="chart-data-table">
+                        <summary>Ver datos de la gráfica</summary>
+                        <div class="table-responsive"><table class="table table-sm mb-0"><thead><tr><th>@card.Definition.LabelColumn</th>@foreach (var set in card.DataSets) { <th class="text-end">@set.Name</th> }</tr></thead><tbody>
+                        @for (var row = 0; row < card.Labels.Count; row++)
+                        {
+                            <tr><th>@card.Labels[row]</th>@foreach (var set in card.DataSets) { <td class="text-end">@FormatChartValue(set.Values[row], card.Definition.Format, card.Definition.DecimalPlaces)</td> }</tr>
+                        }
+                        </tbody></table></div>
+                    </details>
+                }
+                <footer class="chart-card-footer">
+                    @if (card.Truncated) { <span class="chart-warning">Resultado limitado; ajusta la consulta SQL.</span> }
+                    @if (card.UpdatedAtUtc.HasValue) { <time datetime="@card.UpdatedAtUtc.Value.ToString("O")">Actualizada @card.UpdatedAtUtc.Value.ToLocalTime().ToString("HH:mm")</time> }
+                </footer>
+            </article>
+        }
+        </div>
+    </section>
+}
+
+<div class="results-heading reports-catalog-heading"><div><span class="eyebrow">DETALLE</span><h2>Reportes disponibles</h2><p>Selecciona un reporte, captura sus parámetros y consulta la información al momento.</p></div></div>
+
+@if (Model.Reports.Count == 0)
 {
     <div class="empty-state">
         <div class="empty-icon">▦</div><h2>Aún no hay reportes publicados</h2>
         <p>Un administrador debe configurar una conexión y dar de alta el primer reporte.</p>
-        @if (User.Identity?.IsAuthenticated == true) { <a class="btn btn-primary" asp-controller="AdminReports" asp-action="Create">Crear reporte</a> }
+        @if (User.IsInRole("Admin")) { <a class="btn btn-primary" asp-controller="AdminReports" asp-action="Create">Crear reporte</a> }
     </div>
 }
 else
 {
     <div class="row g-4">
-        @foreach (var report in Model)
+        @foreach (var report in Model.Reports)
         {
             <div class="col-md-6 col-xl-4"><a class="report-card" asp-controller="Reports" asp-action="Run" asp-route-id="@report.Id">
                 <div class="report-card-icon">▤</div><div><h2>@report.Name</h2><p>@(report.Description ?? "Consulta este reporte y exporta sus resultados a Excel.")</p><span>Ejecutar reporte <strong>→</strong></span></div>
             </a></div>
         }
     </div>
+}
+
+@functions {
+    static string IconFor(KpiIcon icon) => icon switch
+    {
+        KpiIcon.Dinero => "$",
+        KpiIcon.Documento => "▤",
+        KpiIcon.Usuarios => "●●",
+        KpiIcon.Alerta => "!",
+        KpiIcon.Porcentaje => "%",
+        _ => "↗"
+    };
+
+    static string ChartTypeName(ChartType type) => type switch
+    {
+        ChartType.Lineas => "LÍNEAS",
+        ChartType.Area => "ÁREA",
+        ChartType.Dona => "DONA",
+        _ => "BARRAS"
+    };
+
+    static string FormatChartValue(decimal? value, ChartValueFormat format, int decimalPlaces)
+    {
+        if (!value.HasValue) return "—";
+        var decimals = Math.Clamp(decimalPlaces, 0, 4);
+        return format switch
+        {
+            ChartValueFormat.Moneda => value.Value.ToString($"C{decimals}", CultureInfo.GetCultureInfo("es-MX")),
+            ChartValueFormat.Porcentaje => value.Value.ToString($"N{decimals}", CultureInfo.GetCultureInfo("es-MX")) + "%",
+            _ => value.Value.ToString($"N{decimals}", CultureInfo.GetCultureInfo("es-MX"))
+        };
+    }
 }

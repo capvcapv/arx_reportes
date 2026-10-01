@@ -1,6 +1,6 @@
 @model UserEditViewModel
 @{ var isNew = Model.Id == Guid.Empty; ViewData["Title"] = isNew ? "Nuevo usuario" : "Editar usuario"; }
-<div class="page-heading"><div><span class="eyebrow">SEGURIDAD</span><h1>@ViewData["Title"]</h1><p>Configura sus datos de acceso y los reportes que podrá consultar.</p></div></div>
+<div class="page-heading"><div><span class="eyebrow">SEGURIDAD</span><h1>@ViewData["Title"]</h1><p>Configura sus datos de acceso, indicadores, gráficas y reportes permitidos.</p></div></div>
 <form method="post" class="panel form-panel">
     <input asp-for="Id" type="hidden" />
     <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
@@ -10,6 +10,38 @@
         <div class="col-md-6"><label asp-for="Password" class="form-label"></label><input asp-for="Password" class="form-control" autocomplete="new-password" placeholder="@(isNew ? "Mínimo 8 caracteres" : "Dejar vacío para conservar")" /><span asp-validation-for="Password" class="text-danger"></span></div>
         <div class="col-md-6"><label asp-for="ConfirmPassword" class="form-label"></label><input asp-for="ConfirmPassword" class="form-control" autocomplete="new-password" /><span asp-validation-for="ConfirmPassword" class="text-danger"></span></div>
         <div class="col-12"><div class="form-check form-switch"><input asp-for="IsActive" class="form-check-input" /><label asp-for="IsActive" class="form-check-label"></label></div></div>
+    </div>
+
+    <div class="section-heading">
+        <div><h2>Permisos de gráficas</h2><p>Selecciona las visualizaciones que aparecerán en el tablero de este usuario.</p></div>
+        <div class="d-flex gap-2"><button class="btn btn-sm btn-outline-secondary" id="clear-charts" type="button">Ninguna</button><button class="btn btn-sm btn-outline-primary" id="select-charts" type="button">Seleccionar todas</button></div>
+    </div>
+    <div class="permission-grid">
+        @if (Model.Charts.Count == 0) { <div class="parameter-empty">Aún no hay gráficas configuradas.</div> }
+        @foreach (var chart in Model.Charts)
+        {
+            var selected = Model.AllowedChartIds.Contains(chart.Id);
+            <label class="permission-card @(chart.IsActive ? "" : "is-inactive")">
+                <input class="form-check-input chart-permission" type="checkbox" name="AllowedChartIds" value="@chart.Id" checked="@selected" />
+                <span><strong>@chart.Name</strong><small>@(chart.IsActive ? "Visible" : "Gráfica inactiva")</small></span>
+            </label>
+        }
+    </div>
+
+    <div class="section-heading">
+        <div><h2>Permisos de KPI</h2><p>Selecciona los indicadores que aparecerán en el inicio de este usuario.</p></div>
+        <div class="d-flex gap-2"><button class="btn btn-sm btn-outline-secondary" id="clear-kpis" type="button">Ninguno</button><button class="btn btn-sm btn-outline-primary" id="select-kpis" type="button">Seleccionar todos</button></div>
+    </div>
+    <div class="permission-grid">
+        @if (Model.Kpis.Count == 0) { <div class="parameter-empty">Aún no hay KPI configurados.</div> }
+        @foreach (var kpi in Model.Kpis)
+        {
+            var selected = Model.AllowedKpiIds.Contains(kpi.Id);
+            <label class="permission-card @(kpi.IsActive ? "" : "is-inactive")">
+                <input class="form-check-input kpi-permission" type="checkbox" name="AllowedKpiIds" value="@kpi.Id" checked="@selected" />
+                <span><strong>@kpi.Name</strong><small>@(kpi.IsActive ? "Visible" : "KPI inactivo")</small></span>
+            </label>
+        }
     </div>
 
     <div class="section-heading">
@@ -27,14 +59,19 @@
             </label>
         }
     </div>
-    <div class="form-actions"><a class="btn btn-light" asp-action="Index">Cancelar</a><button class="btn btn-primary" type="submit">Guardar usuario</button></div>
+    <div class="form-actions"><a class="btn btn-light" asp-action="Index"><span class="btn-icon" aria-hidden="true">←</span><span>Cancelar</span></a><button class="btn btn-primary" type="submit"><span class="btn-icon" aria-hidden="true">✓</span><span>Guardar usuario</span></button></div>
 </form>
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <script>
         const permissions=[...document.querySelectorAll('.report-permission')];
+        const kpiPermissions=[...document.querySelectorAll('.kpi-permission')];
+        const chartPermissions=[...document.querySelectorAll('.chart-permission')];
         document.getElementById('select-reports')?.addEventListener('click',()=>permissions.forEach(item=>item.checked=true));
         document.getElementById('clear-reports')?.addEventListener('click',()=>permissions.forEach(item=>item.checked=false));
+        document.getElementById('select-kpis')?.addEventListener('click',()=>kpiPermissions.forEach(item=>item.checked=true));
+        document.getElementById('clear-kpis')?.addEventListener('click',()=>kpiPermissions.forEach(item=>item.checked=false));
+        document.getElementById('select-charts')?.addEventListener('click',()=>chartPermissions.forEach(item=>item.checked=true));
+        document.getElementById('clear-charts')?.addEventListener('click',()=>chartPermissions.forEach(item=>item.checked=false));
     </script>
 }
-

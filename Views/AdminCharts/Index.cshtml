@@ -1,0 +1,94 @@
+@model IReadOnlyList<ChartDefinition>
+@{
+    ViewData["Title"] = "Administrar gráficas";
+    var connections = ViewBag.Connections as Dictionary<Guid, string> ?? new();
+}
+<div class="page-heading">
+    <div><span class="eyebrow">TABLERO</span><h1>Gráficas</h1><p>Visualizaciones alimentadas directamente por consultas de SQL Server.</p></div>
+    <a class="btn btn-primary" asp-action="Create"><span class="btn-icon" aria-hidden="true">＋</span><span>Nueva gráfica</span></a>
+</div>
+<div class="reorder-hint mb-3"><span class="drag-symbol">⋮⋮</span> Arrastra las gráficas para cambiar su orden en el inicio. <span id="chart-order-status" aria-live="polite"></span></div>
+<div class="panel table-responsive"><table class="table align-middle mb-0">
+    <thead><tr><th class="drag-column"><span class="visually-hidden">Ordenar</span></th><th>Gráfica</th><th>Conexión</th><th>Tipo</th><th>Tamaño</th><th>Caché</th><th>Estado</th><th class="text-end">Acciones</th></tr></thead>
+    <tbody id="sortable-charts">
+    @if (Model.Count == 0) { <tr><td colspan="8" class="text-center text-muted py-5">No hay gráficas configuradas.</td></tr> }
+    @foreach (var item in Model)
+    {
+        <tr data-chart-id="@item.Id">
+            <td class="drag-column"><button class="drag-handle" type="button" draggable="true" title="Arrastrar para ordenar" aria-label="Mover @item.Name">⋮⋮</button></td>
+            <td><strong>@item.Name</strong><small class="d-block text-muted">@(item.Description ?? $"{item.LabelColumn} · {item.ValueColumn}")</small></td>
+            <td>@(connections.GetValueOrDefault(item.ConnectionId) ?? "Conexión no disponible")</td>
+            <td>@DisplayType(item.Type)</td>
+            <td>@(item.Size == ChartSize.Completa ? "Completo" : "Medio")</td>
+            <td>@(item.CacheMinutes == 0 ? "Sin caché" : $"{item.CacheMinutes} min")</td>
+            <td><span class="badge @(item.IsActive ? "text-bg-success" : "text-bg-secondary")">@(item.IsActive ? "Visible" : "Inactiva")</span></td>
+            <td class="admin-actions-cell"><div class="admin-actions"><a class="btn btn-sm btn-outline-success" asp-controller="Home" asp-action="Index" asp-route-refreshCharts="true"><span class="btn-icon" aria-hidden="true">↗</span><span>Ver inicio</span></a><a class="btn btn-sm btn-outline-primary" asp-action="Edit" asp-route-id="@item.Id"><span class="btn-icon" aria-hidden="true">✎</span><span>Editar</span></a><form asp-action="Delete" asp-route-id="@item.Id" method="post" onsubmit="return confirm('¿Eliminar esta gráfica?')"><button class="btn btn-sm btn-outline-danger"><span class="btn-icon" aria-hidden="true">×</span><span>Eliminar</span></button></form></div></td>
+        </tr>
+    }
+    </tbody>
+</table></div>
+<form id="chart-reorder-form" class="d-none" asp-action="Reorder" method="post"></form>
+
+@functions {
+    static string DisplayType(ChartType type) => type switch
+    {
+        ChartType.Lineas => "Líneas",
+        ChartType.Area => "Área",
+        ChartType.Dona => "Dona",
+        _ => "Barras"
+    };
+}
+
+@section Scripts {
+    <script>
+        const chartRows=document.getElementById('sortable-charts');
+        const chartOrderStatus=document.getElementById('chart-order-status');
+        const chartReorderForm=document.getElementById('chart-reorder-form');
+        let draggedChartRow=null;
+
+        chartRows?.querySelectorAll('.drag-handle').forEach(handle=>{
+            handle.addEventListener('dragstart',event=>{
+                draggedChartRow=handle.closest('tr');
+                draggedChartRow.classList.add('is-dragging');
+                event.dataTransfer.effectAllowed='move';
+                event.dataTransfer.setData('text/plain',draggedChartRow.dataset.chartId);
+            });
+            handle.addEventListener('dragend',()=>{
+                draggedChartRow?.classList.remove('is-dragging');
+                draggedChartRow=null;
+                chartRows.querySelectorAll('tr').forEach(row=>row.classList.remove('drag-target'));
+            });
+        });
+
+        chartRows?.addEventListener('dragover',event=>{
+            if(!draggedChartRow)return;
+            event.preventDefault();
+            const target=event.target.closest('tr[data-chart-id]');
+            if(!target||target===draggedChartRow)return;
+            const bounds=target.getBoundingClientRect();
+            chartRows.insertBefore(draggedChartRow,event.clientY>bounds.top+bounds.height/2?target.nextSibling:target);
+            chartRows.querySelectorAll('tr').forEach(row=>row.classList.remove('drag-target'));
+            target.classList.add('drag-target');
+        });
+
+        chartRows?.addEventListener('drop',async event=>{
+            if(!draggedChartRow)return;
+            event.preventDefault();
+            chartOrderStatus.className='saving';
+            chartOrderStatus.textContent='Guardando orden…';
+            const formData=new FormData(chartReorderForm);
+            chartRows.querySelectorAll('tr[data-chart-id]').forEach(row=>formData.append('ids',row.dataset.chartId));
+            try {
+                const response=await fetch('@Url.Action("Reorder", "AdminCharts")',{method:'POST',body:formData,headers:{'X-Requested-With':'XMLHttpRequest'}});
+                const result=await response.json();
+                if(!response.ok||!result.success)throw new Error(result.message||'No fue posible guardar el orden.');
+                chartOrderStatus.className='saved';
+                chartOrderStatus.textContent='Orden guardado';
+                setTimeout(()=>chartOrderStatus.textContent='',2200);
+            } catch(error) {
+                chartOrderStatus.className='failed';
+                chartOrderStatus.textContent=error.message;
+            }
+        });
+    </script>
+}

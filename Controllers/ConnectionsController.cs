@@ -80,7 +80,7 @@ public sealed class ConnectionsController(CatalogStore store, SqlReportRunner ru
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
         if (!await store.DeleteConnectionAsync(id, cancellationToken))
-            TempData["Error"] = "No se puede eliminar: hay reportes que usan esta conexión.";
+            TempData["Error"] = "No se puede eliminar: hay reportes, KPI o gráficas que usan esta conexión.";
         else
             TempData["Success"] = "Conexión eliminada.";
         return RedirectToAction(nameof(Index));

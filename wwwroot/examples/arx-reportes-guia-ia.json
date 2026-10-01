@@ -1,6 +1,6 @@
 {
   "documentType": "ARX_REPORTES_AI_GUIDE",
-  "guideVersion": 1,
+  "guideVersion": 3,
   "language": "es-MX",
   "purpose": "Guía para que una IA genere archivos de reporte compatibles con la función Importar JSON de ARX Reportes.",
   "importantInstructions": [
@@ -14,11 +14,15 @@
     "La conexión se resuelve por sourceConnectionName o puede reemplazarse manualmente al importar.",
     "Las consultas de opciones para parámetros tipo Consulta se ejecutan en la misma conexión del reporte y también deben comenzar con SELECT o WITH.",
     "Para destacar filas, agrega los textos exactos esperados en la primera columna dentro de report.highlightFirstColumnValues.",
+    "Los KPI del reporte se calculan sobre las filas devueltas por la consulta después de aplicar los parámetros. El nombre de columnName debe coincidir exactamente con un alias o columna del resultado.",
+    "Para un KPI con operation Conteo puedes dejar columnName en null para contar todas las filas. Las demás operaciones requieren una columna.",
+    "Para crear un desglose, agrega un elemento en report.drilldowns: sourceColumn será la celda clicable, valueColumn aportará el valor y targetParameterName indica el parámetro del reporte destino.",
+    "targetReportName debe coincidir con el nombre de un reporte que ya exista en la instalación destino. Al importar, ARX intentará volver a vincularlo por nombre.",
     "El archivo JSON debe ser válido, sin comentarios, bloques Markdown ni texto antes o después del objeto raíz."
   ],
   "formatContract": {
     "root": {
-      "schemaVersion": "Número entero. Actualmente debe ser 1.",
+      "schemaVersion": "Número entero. La versión actual es 3; también se aceptan archivos antiguos con versión 1 o 2.",
       "exportedAtUtc": "Fecha ISO 8601 en UTC, por ejemplo 2026-09-26T15:00:00Z.",
       "sourceConnectionName": "Nombre exacto de la conexión de origen. No es una cadena de conexión.",
       "report": "Definición del reporte."
@@ -32,7 +36,26 @@
       "isActive": "Booleano. true publica el reporte.",
       "showColumnTotals": "Booleano. true agrega sumatorias para columnas numéricas.",
       "highlightFirstColumnValues": "Arreglo de cero a 200 textos. Si la primera columna coincide exactamente con uno de ellos, la fila se destaca. La comparación ignora mayúsculas/minúsculas y espacios exteriores.",
+      "reportKpis": "Arreglo de cero a 12 KPI calculados con el resultado del reporte.",
+      "drilldowns": "Arreglo de cero a 20 enlaces desde columnas del resultado hacia otros reportes.",
       "parameters": "Arreglo de cero a 100 parámetros."
+    },
+    "drilldown": {
+      "sourceColumn": "Nombre exacto de la columna que se mostrará como enlace.",
+      "valueColumn": "Columna cuyo valor se enviará al destino. Puede ser null para usar sourceColumn.",
+      "targetReportName": "Nombre exacto del reporte destino. Debe existir para que el enlace quede activo.",
+      "targetParameterName": "Nombre del parámetro del reporte destino, sin @.",
+      "autoExecute": "Booleano. true ejecuta el reporte destino al abrirlo; false sólo precarga el filtro.",
+      "openInNewTab": "Booleano. true abre el desglose en otra pestaña."
+    },
+    "reportKpi": {
+      "name": "Nombre visible obligatorio, máximo 80 caracteres.",
+      "columnName": "Nombre exacto de la columna devuelta por SQL. Puede ser null únicamente para Conteo de todas las filas.",
+      "operation": "Uno de los valores de allowedReportKpiOperations.",
+      "format": "Uno de los valores de allowedReportKpiFormats.",
+      "decimalPlaces": "Entero entre 0 y 4.",
+      "tone": "Uno de los valores de allowedKpiTones.",
+      "icon": "Uno de los valores de allowedKpiIcons."
     },
     "parameter": {
       "name": "Nombre usado en SQL, sin @. Ejemplo: FechaInicial.",
@@ -61,6 +84,34 @@
       "Decimal",
       "Booleano"
     ],
+    "allowedReportKpiOperations": [
+      "Suma",
+      "Promedio",
+      "Conteo",
+      "ConteoDistinto",
+      "Minimo",
+      "Maximo"
+    ],
+    "allowedReportKpiFormats": [
+      "Numero",
+      "Moneda",
+      "Porcentaje"
+    ],
+    "allowedKpiTones": [
+      "Verde",
+      "Azul",
+      "Ambar",
+      "Rojo",
+      "Grafito"
+    ],
+    "allowedKpiIcons": [
+      "Indicador",
+      "Dinero",
+      "Documento",
+      "Usuarios",
+      "Alerta",
+      "Porcentaje"
+    ],
     "defaultValueExamples": {
       "Texto": "ACTIVO",
       "Entero": "100",
@@ -73,7 +124,7 @@
   },
   "recommendedPrompt": "Usa esta guía para generar un reporte compatible con ARX Reportes. Devuelve solamente el objeto JSON que corresponde a importableExample, sin Markdown ni explicaciones. No inventes nombres de tablas o columnas: utiliza únicamente el esquema SQL que te proporcione. Usa parámetros SQL en vez de concatenar valores. No incluyas credenciales.",
   "importableExample": {
-    "schemaVersion": 1,
+    "schemaVersion": 3,
     "exportedAtUtc": "2026-09-26T15:00:00Z",
     "sourceConnectionName": "SQL Producción",
     "report": {
@@ -88,6 +139,45 @@
         "SUMA 80%",
         "SUMA 20%",
         "TOTAL COBRANZA CORRIENTE"
+      ],
+      "reportKpis": [
+        {
+          "name": "Total del resultado",
+          "columnName": "Total",
+          "operation": "Suma",
+          "format": "Moneda",
+          "decimalPlaces": 2,
+          "tone": "Verde",
+          "icon": "Dinero"
+        },
+        {
+          "name": "Documentos",
+          "columnName": null,
+          "operation": "Conteo",
+          "format": "Numero",
+          "decimalPlaces": 0,
+          "tone": "Azul",
+          "icon": "Documento"
+        },
+        {
+          "name": "Clientes distintos",
+          "columnName": "ClienteId",
+          "operation": "ConteoDistinto",
+          "format": "Numero",
+          "decimalPlaces": 0,
+          "tone": "Grafito",
+          "icon": "Usuarios"
+        }
+      ],
+      "drilldowns": [
+        {
+          "sourceColumn": "Folio",
+          "valueColumn": "Id",
+          "targetReportName": "Detalle del documento",
+          "targetParameterName": "DocumentoId",
+          "autoExecute": true,
+          "openInNewTab": true
+        }
       ],
       "parameters": [
         {

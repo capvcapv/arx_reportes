@@ -21,6 +21,8 @@
                         @if (User.IsInRole("Admin"))
                         {
                             <li class="nav-item"><a class="nav-link" asp-controller="AdminReports" asp-action="Index">Administrar</a></li>
+                            <li class="nav-item"><a class="nav-link" asp-controller="AdminKpis" asp-action="Index">KPI</a></li>
+                            <li class="nav-item"><a class="nav-link" asp-controller="AdminCharts" asp-action="Index">Gráficas</a></li>
                             <li class="nav-item"><a class="nav-link" asp-controller="Connections" asp-action="Index">Conexiones</a></li>
                             <li class="nav-item"><a class="nav-link" asp-controller="Users" asp-action="Index">Usuarios</a></li>
                         }
@@ -62,6 +64,8 @@
                 @if (User.IsInRole("Admin"))
                 {
                     <a asp-controller="AdminReports" asp-action="Index">Administrar</a>
+                    <a asp-controller="AdminKpis" asp-action="Index">KPI</a>
+                    <a asp-controller="AdminCharts" asp-action="Index">Gráficas</a>
                     <a asp-controller="Connections" asp-action="Index">Conexiones</a>
                     <a asp-controller="Users" asp-action="Index">Usuarios</a>
                 }

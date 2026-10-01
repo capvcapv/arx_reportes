@@ -34,6 +34,19 @@ document.querySelectorAll('.copy-code').forEach((button) => {
     });
 });
 
+document.querySelectorAll('[data-copy]').forEach((button) => {
+    button.addEventListener('click', async () => {
+        try {
+            await navigator.clipboard.writeText(button.dataset.copy ?? '');
+            const original = button.textContent;
+            button.textContent = 'Copiado';
+            setTimeout(() => { button.textContent = original; }, 1600);
+        } catch {
+            button.textContent = 'Selecciona el comando';
+        }
+    });
+});
+
 const search = document.querySelector('#docs-search');
 if (search) {
     const sections = [...document.querySelectorAll('[data-doc-section]')];

@@ -10,7 +10,7 @@
             <label asp-for="Database" class="form-label"></label>
             <div class="input-group database-picker">
                 <input asp-for="Database" class="form-control" list="database-options" autocomplete="off" placeholder="Escribe o consulta las bases disponibles" />
-                <button class="btn btn-outline-primary" id="load-databases" type="button">Consultar bases</button>
+                <button class="btn btn-outline-primary" id="load-databases" type="button"><span class="btn-icon" aria-hidden="true">↻</span><span>Consultar bases</span></button>
             </div>
             <datalist id="database-options"></datalist>
             <div class="form-text" id="database-status">Utiliza el servidor y las credenciales capturadas arriba.</div>
@@ -22,7 +22,7 @@
         <div class="col-md-4"><div class="form-check form-switch"><input asp-for="Encrypt" class="form-check-input" /><label asp-for="Encrypt" class="form-check-label"></label></div></div>
         <div class="col-md-4"><div class="form-check form-switch"><input asp-for="TrustServerCertificate" class="form-check-input" /><label asp-for="TrustServerCertificate" class="form-check-label"></label></div></div>
         <div class="col-md-4"><div class="form-check form-switch"><input asp-for="IsActive" class="form-check-input" /><label asp-for="IsActive" class="form-check-label"></label></div></div>
-    </div><div class="form-actions"><a class="btn btn-light" asp-action="Index">Cancelar</a><button class="btn btn-primary" type="submit">Guardar conexión</button></div>
+    </div><div class="form-actions"><a class="btn btn-light" asp-action="Index"><span class="btn-icon" aria-hidden="true">←</span><span>Cancelar</span></a><button class="btn btn-primary" type="submit"><span class="btn-icon" aria-hidden="true">✓</span><span>Guardar conexión</span></button></div>
 </form>
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />

@@ -1,0 +1,46 @@
+@model KpiEditViewModel
+@using ArxReportes.Models
+@{
+    var isNew = string.IsNullOrWhiteSpace(Model.Kpi.Name);
+    ViewData["Title"] = isNew ? "Nuevo KPI" : "Editar KPI";
+}
+<div class="page-heading"><div><span class="eyebrow">INDICADOR</span><h1>@ViewData["Title"]</h1><p>La consulta debe devolver una sola fila con el valor que aparecerá en el inicio.</p></div></div>
+<form method="post" class="panel form-panel">
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+    <div class="row g-4">
+        <div class="col-md-7"><label asp-for="Kpi.Name" class="form-label"></label><input asp-for="Kpi.Name" class="form-control" placeholder="Facturado hoy" /><span asp-validation-for="Kpi.Name" class="text-danger"></span></div>
+        <div class="col-md-5"><label asp-for="Kpi.ConnectionId" class="form-label"></label><select asp-for="Kpi.ConnectionId" asp-items="Model.Connections" class="form-select"><option value="">Selecciona…</option></select><span asp-validation-for="Kpi.ConnectionId" class="text-danger"></span></div>
+        <div class="col-12"><label asp-for="Kpi.Description" class="form-label"></label><input asp-for="Kpi.Description" class="form-control" placeholder="Total de facturas vigentes generadas durante el día" /><span asp-validation-for="Kpi.Description" class="text-danger"></span></div>
+        <div class="col-12">
+            <label asp-for="Kpi.Sql" class="form-label"></label>
+            <textarea asp-for="Kpi.Sql" class="form-control sql-editor" rows="9" spellcheck="false" placeholder="SELECT SUM(CTOTAL) AS Valor, SUM(ImporteAnterior) AS Anterior, COUNT(*) AS Detalle FROM ..."></textarea>
+            <div class="form-text">Sólo se aceptan SELECT o WITH. Usa una cuenta SQL de lectura. No se admiten parámetros porque los KPI se actualizan automáticamente.</div>
+            <span asp-validation-for="Kpi.Sql" class="text-danger"></span>
+        </div>
+    </div>
+
+    <div class="section-heading"><div><h2>Columnas del resultado</h2><p>La columna de valor es obligatoria. Comparación y detalle son opcionales.</p></div></div>
+    <div class="row g-4">
+        <div class="col-md-4"><label asp-for="Kpi.ValueColumn" class="form-label"></label><input asp-for="Kpi.ValueColumn" class="form-control" placeholder="Valor" /><div class="form-text">Importe o dato principal.</div><span asp-validation-for="Kpi.ValueColumn" class="text-danger"></span></div>
+        <div class="col-md-4"><label asp-for="Kpi.ComparisonColumn" class="form-label"></label><input asp-for="Kpi.ComparisonColumn" class="form-control" placeholder="Anterior" /><div class="form-text">Calcula la variación porcentual.</div><span asp-validation-for="Kpi.ComparisonColumn" class="text-danger"></span></div>
+        <div class="col-md-4"><label asp-for="Kpi.DetailColumn" class="form-label"></label><input asp-for="Kpi.DetailColumn" class="form-control" placeholder="Detalle" /><div class="form-text">Texto secundario, por ejemplo “37 pedidos”.</div><span asp-validation-for="Kpi.DetailColumn" class="text-danger"></span></div>
+        <div class="col-md-4"><label asp-for="Kpi.ComparisonLabel" class="form-label"></label><input asp-for="Kpi.ComparisonLabel" class="form-control" placeholder="vs. mes anterior" /><span asp-validation-for="Kpi.ComparisonLabel" class="text-danger"></span></div>
+        <div class="col-md-4"><label asp-for="Kpi.Format" class="form-label"></label><select asp-for="Kpi.Format" asp-items="Html.GetEnumSelectList<KpiValueFormat>()" class="form-select"></select></div>
+        <div class="col-md-4"><label asp-for="Kpi.DecimalPlaces" class="form-label"></label><input asp-for="Kpi.DecimalPlaces" class="form-control" /><span asp-validation-for="Kpi.DecimalPlaces" class="text-danger"></span></div>
+        <div class="col-12"><div class="form-check form-switch"><input asp-for="Kpi.LowerIsBetter" class="form-check-input" /><label asp-for="Kpi.LowerIsBetter" class="form-check-label"></label><div class="form-text">Úsalo para saldos vencidos, errores o tiempos: una disminución se mostrará como favorable.</div></div></div>
+    </div>
+
+    <div class="section-heading"><div><h2>Presentación y comportamiento</h2><p>Define cómo se verá y con qué frecuencia consultará SQL Server.</p></div></div>
+    <div class="row g-4">
+        <div class="col-md-3"><label asp-for="Kpi.Tone" class="form-label"></label><select asp-for="Kpi.Tone" asp-items="Html.GetEnumSelectList<KpiTone>()" class="form-select"></select></div>
+        <div class="col-md-3"><label asp-for="Kpi.Icon" class="form-label"></label><select asp-for="Kpi.Icon" asp-items="Html.GetEnumSelectList<KpiIcon>()" class="form-select"></select></div>
+        <div class="col-md-6"><label asp-for="Kpi.LinkedReportId" class="form-label"></label><select asp-for="Kpi.LinkedReportId" asp-items="Model.Reports" class="form-select"><option value="">Sin reporte relacionado</option></select><div class="form-text">Al pulsar la tarjeta se abrirá este reporte, siempre que el usuario tenga permiso.</div></div>
+        <div class="col-md-3"><label asp-for="Kpi.CommandTimeoutSeconds" class="form-label"></label><input asp-for="Kpi.CommandTimeoutSeconds" class="form-control" /><span asp-validation-for="Kpi.CommandTimeoutSeconds" class="text-danger"></span></div>
+        <div class="col-md-3"><label asp-for="Kpi.CacheMinutes" class="form-label"></label><input asp-for="Kpi.CacheMinutes" class="form-control" /><div class="form-text">0 ejecuta siempre; recomendado: 2–5.</div><span asp-validation-for="Kpi.CacheMinutes" class="text-danger"></span></div>
+        <div class="col-md-3"><label asp-for="Kpi.DisplayOrder" class="form-label"></label><input asp-for="Kpi.DisplayOrder" class="form-control" /><span asp-validation-for="Kpi.DisplayOrder" class="text-danger"></span></div>
+        <div class="col-md-3 d-flex align-items-end"><div class="form-check form-switch mb-2"><input asp-for="Kpi.IsActive" class="form-check-input" /><label asp-for="Kpi.IsActive" class="form-check-label"></label></div></div>
+    </div>
+    <div class="kpi-query-example mt-4"><strong>Ejemplo mínimo</strong><code>SELECT SUM(CTOTAL) AS Valor FROM admDocumentos WHERE CCANCELADO = 0;</code></div>
+    <div class="form-actions"><a class="btn btn-light" asp-action="Index"><span class="btn-icon" aria-hidden="true">←</span><span>Cancelar</span></a><button class="btn btn-primary" type="submit"><span class="btn-icon" aria-hidden="true">✓</span><span>Guardar KPI</span></button></div>
+</form>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

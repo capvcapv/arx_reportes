@@ -1,6 +1,7 @@
 @model ReportRunViewModel
 @using ArxReportes.Models
 @using System.Globalization
+@using Microsoft.AspNetCore.Routing
 @{ ViewData["Title"] = Model.Report.Name; }
 <div class="page-heading"><div><a class="back-link" asp-controller="Home" asp-action="Index">← Todos los reportes</a><h1>@Model.Report.Name</h1><p>@Model.Report.Description</p></div></div>
 <form method="post" class="panel filter-panel" id="report-form">
@@ -27,9 +28,9 @@
                 var step = parameter.Type == ReportParameterType.Decimal ? "any" : parameter.Type == ReportParameterType.Entero ? "1" : null;
                 <input class="form-control" type="@inputType" step="@step" name="@parameter.Name" id="@parameter.Name" value="@value" placeholder="@parameter.Placeholder" required="@parameter.IsRequired" />
             }</div>
-        }<div class="col-sm-6 col-lg-3"><button class="btn btn-primary w-100" type="submit">Ejecutar reporte</button></div></div>
+        }<div class="col-sm-6 col-lg-3"><button class="btn btn-primary w-100" type="submit"><span class="btn-icon" aria-hidden="true">▶</span><span>Ejecutar reporte</span></button></div></div>
     }
-    else { <button class="btn btn-primary" type="submit">Ejecutar reporte</button> }
+    else { <button class="btn btn-primary" type="submit"><span class="btn-icon" aria-hidden="true">▶</span><span>Ejecutar reporte</span></button> }
 </form>
 @if (!string.IsNullOrWhiteSpace(Model.Error)) { <div class="alert alert-danger mt-4"><strong>No se pudo ejecutar.</strong><br />@Model.Error</div> }
 @if (Model.Result is not null)
@@ -38,13 +39,49 @@
         .Select(value => value.Trim())
         .Where(value => value.Length > 0)
         .ToHashSet(StringComparer.OrdinalIgnoreCase);
-    <div class="results-heading"><div><h2>Resultados</h2><p>@Model.Result.Rows.Count.ToString("N0") filas · @Model.Result.Elapsed.TotalSeconds.ToString("N2") segundos @if (Model.Result.Truncated) { <span class="text-warning">· Resultado limitado</span> }</p></div><button class="btn btn-success" type="submit" form="report-form" formaction="@Url.Action("Export", new { id = Model.Report.Id })">Exportar a Excel</button></div>
+    @if (Model.Kpis.Count > 0)
+    {
+        <section class="report-kpi-summary" aria-labelledby="report-kpi-title">
+            <div class="results-heading report-kpi-heading"><div><span class="eyebrow">RESUMEN DEL REPORTE</span><h2 id="report-kpi-title">Indicadores del resultado</h2><p>Calculados con las filas obtenidas para los parámetros seleccionados.</p></div></div>
+            @if (Model.Result.Truncated) { <div class="alert alert-warning py-2"><strong>Atención:</strong> los KPI se calcularon únicamente con las filas mostradas porque el resultado alcanzó el límite configurado.</div> }
+            <div class="report-kpi-grid">
+            @foreach (var card in Model.Kpis)
+            {
+                var toneClass = "kpi-tone-" + card.Definition.Tone.ToString().ToLowerInvariant();
+                <article class="report-kpi-card @toneClass @(card.Error is not null ? "kpi-has-error" : "")">
+                    <div class="report-kpi-card-top"><span class="kpi-icon" aria-hidden="true">@IconFor(card.Definition.Icon)</span><span class="report-kpi-name">@card.Definition.Name</span></div>
+                    <div class="report-kpi-value @(card.Error is not null ? "report-kpi-error-value" : "")">@card.DisplayValue</div>
+                    <div class="report-kpi-operation">@(card.Error ?? card.OperationLabel)</div>
+                </article>
+            }
+            </div>
+        </section>
+    }
+    <div class="results-heading"><div><h2>Resultados</h2><p>@Model.Result.Rows.Count.ToString("N0") filas · @Model.Result.Elapsed.TotalSeconds.ToString("N2") segundos @if (Model.Result.Truncated) { <span class="text-warning">· Resultado limitado</span> }</p></div><button class="btn btn-success" type="submit" form="report-form" formaction="@Url.Action("Export", new { id = Model.Report.Id })"><span class="btn-icon" aria-hidden="true">↓</span><span>Exportar a Excel</span></button></div>
     <div class="panel result-table table-responsive"><table class="table table-hover table-sm mb-0"><thead><tr>@foreach (var column in Model.Result.Columns) { <th>@column</th> }</tr></thead><tbody>
     @if (Model.Result.Rows.Count == 0) { <tr><td colspan="@Math.Max(1, Model.Result.Columns.Count)" class="text-center text-muted py-5">La consulta no devolvió registros.</td></tr> }
     @foreach (var row in Model.Result.Rows)
     {
         var highlighted = IsHighlightedRow(row, highlightedValues);
-        <tr class="@(highlighted ? "highlighted-report-row" : null)">@foreach (var value in row) { <td>@FormatValue(value)</td> }</tr>
+        <tr class="@(highlighted ? "highlighted-report-row" : null)">
+        @for (var columnIndex = 0; columnIndex < Model.Result.Columns.Count; columnIndex++)
+        {
+            var value = row[columnIndex];
+            var binding = Model.Drilldowns.FirstOrDefault(x => x.ClickableColumnIndex == columnIndex);
+            var drilldownValue = binding is null ? null : FormatDrilldownValue(row[binding.ValueColumnIndex], binding);
+            if (binding is not null && value is not null && drilldownValue is not null)
+            {
+                var routeValues = new RouteValueDictionary { ["id"] = binding.TargetReportId, ["p_" + binding.TargetParameterName] = drilldownValue };
+                if (binding.AutoExecute) routeValues["autoRun"] = true;
+                var url = Url.Action("Run", "Reports", routeValues);
+                <td class="drilldown-cell"><a class="report-drilldown-link" href="@url" target="@(binding.OpenInNewTab ? "_blank" : null)" rel="@(binding.OpenInNewTab ? "noopener" : null)" title="Abrir @binding.TargetReportName"><span>@FormatValue(value)</span><span class="drilldown-arrow" aria-hidden="true">↗</span></a></td>
+            }
+            else
+            {
+                <td>@FormatValue(value)</td>
+            }
+        }
+        </tr>
     }
     </tbody>
     @if (Model.Report.ShowColumnTotals && Model.Result.ColumnTotals.Any(x => x.HasValue))
@@ -62,10 +99,48 @@
 }
 @functions {
     static string FormatValue(object? value) => value switch { null => "", DateTime date => date.ToString("dd/MM/yyyy HH:mm", CultureInfo.CurrentCulture), decimal number => number.ToString("N2", CultureInfo.CurrentCulture), bool boolean => boolean ? "Sí" : "No", byte[] bytes => $"[{bytes.Length} bytes]", _ => Convert.ToString(value, CultureInfo.CurrentCulture) ?? "" };
+    static string? FormatDrilldownValue(object? value, ReportDrilldownBindingViewModel binding)
+    {
+        if (value is null or DBNull) return null;
+        var effectiveType = binding.TargetParameterType == ReportParameterType.Consulta
+            ? binding.TargetLookupValueType switch
+            {
+                LookupValueType.Entero => ReportParameterType.Entero,
+                LookupValueType.Decimal => ReportParameterType.Decimal,
+                LookupValueType.Booleano => ReportParameterType.Booleano,
+                _ => ReportParameterType.Texto
+            }
+            : binding.TargetParameterType;
+        try
+        {
+            return effectiveType switch
+            {
+                ReportParameterType.Fecha when value is DateTime date => date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+                ReportParameterType.FechaHora when value is DateTime date => date.ToString("yyyy-MM-ddTHH:mm:ss", CultureInfo.InvariantCulture),
+                ReportParameterType.Booleano => Convert.ToBoolean(value, CultureInfo.InvariantCulture) ? "true" : "false",
+                ReportParameterType.Entero => Convert.ToInt64(value, CultureInfo.InvariantCulture).ToString(CultureInfo.InvariantCulture),
+                ReportParameterType.Decimal => Convert.ToDecimal(value, CultureInfo.InvariantCulture).ToString(CultureInfo.InvariantCulture),
+                _ => Convert.ToString(value, CultureInfo.InvariantCulture)
+            };
+        }
+        catch (Exception exception) when (exception is FormatException or InvalidCastException or OverflowException)
+        {
+            return null;
+        }
+    }
     static bool IsHighlightedRow(IReadOnlyList<object?> row, ISet<string> configuredValues)
     {
         if (row.Count == 0 || row[0] is null) return false;
         var firstValue = Convert.ToString(row[0], CultureInfo.CurrentCulture)?.Trim();
         return !string.IsNullOrEmpty(firstValue) && configuredValues.Contains(firstValue);
     }
+    static string IconFor(KpiIcon icon) => icon switch
+    {
+        KpiIcon.Dinero => "$",
+        KpiIcon.Documento => "▤",
+        KpiIcon.Usuarios => "●●",
+        KpiIcon.Alerta => "!",
+        KpiIcon.Porcentaje => "%",
+        _ => "↗"
+    };
 }

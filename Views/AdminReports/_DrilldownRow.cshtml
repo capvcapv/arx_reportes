@@ -1,0 +1,47 @@
+@model ReportDrilldownEditRowViewModel
+@using ArxReportes.Models
+@{
+    var drilldown = Model.Drilldown;
+    var index = Model.Index;
+    var selectedTarget = Model.TargetReports.FirstOrDefault(x => x.Id == drilldown.TargetReportId);
+    var parameterNames = selectedTarget?.ParameterNames ?? [];
+}
+<div class="drilldown-config-row">
+    <div>
+        <label class="form-label">Columna clicable</label>
+        <input name="Report.Drilldowns[@index].SourceColumn" data-drilldown-field="SourceColumn" value="@drilldown.SourceColumn" class="form-control" placeholder="Cliente" required />
+    </div>
+    <div>
+        <label class="form-label">Valor a enviar</label>
+        <input name="Report.Drilldowns[@index].ValueColumn" data-drilldown-field="ValueColumn" value="@drilldown.ValueColumn" class="form-control" placeholder="ClienteId (opcional)" />
+    </div>
+    <div>
+        <label class="form-label">Reporte destino</label>
+        <select name="Report.Drilldowns[@index].TargetReportId" data-drilldown-field="TargetReportId" class="form-select drilldown-target" required>
+            <option value="">Selecciona…</option>
+            @if (selectedTarget is null && !string.IsNullOrWhiteSpace(drilldown.TargetReportName))
+            {
+                <option value="" selected>No encontrado: @drilldown.TargetReportName</option>
+            }
+            @foreach (var target in Model.TargetReports)
+            {
+                <option value="@target.Id" data-parameters="@string.Join("|", target.ParameterNames)" selected="@(target.Id == drilldown.TargetReportId)">@target.Name@(!target.IsActive ? " (inactivo)" : "")</option>
+            }
+        </select>
+    </div>
+    <div>
+        <label class="form-label">Parámetro destino</label>
+        <select name="Report.Drilldowns[@index].TargetParameterName" data-drilldown-field="TargetParameterName" data-selected="@drilldown.TargetParameterName" class="form-select drilldown-parameter" required>
+            <option value="">Selecciona…</option>
+            @foreach (var parameterName in parameterNames)
+            {
+                <option value="@parameterName" selected="@(string.Equals(parameterName, drilldown.TargetParameterName, StringComparison.OrdinalIgnoreCase))">@@@parameterName</option>
+            }
+        </select>
+    </div>
+    <div class="drilldown-switches">
+        <div class="form-check form-switch"><input name="Report.Drilldowns[@index].AutoExecute" data-drilldown-field="AutoExecute" class="form-check-input" type="checkbox" value="true" checked="@drilldown.AutoExecute" /><label class="form-check-label">Ejecutar</label></div>
+        <div class="form-check form-switch"><input name="Report.Drilldowns[@index].OpenInNewTab" data-drilldown-field="OpenInNewTab" class="form-check-input" type="checkbox" value="true" checked="@drilldown.OpenInNewTab" /><label class="form-check-label">Nueva pestaña</label></div>
+    </div>
+    <div class="drilldown-remove"><button type="button" class="btn btn-sm btn-outline-danger remove-drilldown"><span class="btn-icon" aria-hidden="true">×</span><span>Quitar</span></button></div>
+</div>

@@ -7,10 +7,10 @@
 }
 <div class="page-heading">
     <div><span class="eyebrow">CONFIGURACIÓN</span><h1>Reportes</h1><p>Consultas publicadas para los usuarios.</p></div>
-    <div class="d-flex flex-wrap gap-2">
-        <a class="btn btn-outline-secondary" asp-action="DownloadAiGuide" title="Descargar formato, reglas y ejemplo para una IA">↓ Guía JSON para IA</a>
-        <button class="btn btn-outline-primary" type="button" data-bs-toggle="modal" data-bs-target="#importReportModal">↑ Importar JSON</button>
-        <a class="btn btn-primary" asp-action="Create">+ Nuevo reporte</a>
+    <div class="page-actions">
+        <a class="btn btn-outline-secondary" asp-action="DownloadAiGuide" title="Descargar formato, reglas y ejemplo para una IA"><span class="btn-icon" aria-hidden="true">↓</span><span>Guía para IA</span></a>
+        <button class="btn btn-outline-primary" type="button" data-bs-toggle="modal" data-bs-target="#importReportModal"><span class="btn-icon" aria-hidden="true">↑</span><span>Importar JSON</span></button>
+        <a class="btn btn-primary" asp-action="Create"><span class="btn-icon" aria-hidden="true">＋</span><span>Nuevo reporte</span></a>
     </div>
 </div>
 <div class="reorder-hint mb-3"><span class="drag-symbol">⋮⋮</span> Arrastra los reportes para cambiar el orden del catálogo. <span id="order-status" aria-live="polite"></span></div>
@@ -20,7 +20,7 @@
     @foreach (var item in Model)
     {
         <tr data-report-id="@item.Id"><td class="drag-column"><button class="drag-handle" type="button" draggable="true" title="Arrastrar para ordenar" aria-label="Mover @item.Name">⋮⋮</button></td><td><strong>@item.Name</strong><small class="d-block text-muted">@item.Description</small></td><td>@(connections.GetValueOrDefault(item.ConnectionId) ?? "Conexión no disponible")</td><td>@item.Parameters.Count</td><td><span class="badge @(item.IsActive ? "text-bg-success" : "text-bg-secondary")">@(item.IsActive ? "Publicado" : "Inactivo")</span></td>
-        <td class="text-end text-nowrap">@if (item.IsActive) { <a class="btn btn-sm btn-outline-success" asp-controller="Reports" asp-action="Run" asp-route-id="@item.Id">Abrir</a> } <a class="btn btn-sm btn-outline-secondary" asp-action="Export" asp-route-id="@item.Id" title="Descargar configuración portable">↓ JSON</a> <a class="btn btn-sm btn-outline-primary" asp-action="Edit" asp-route-id="@item.Id">Editar</a> <form class="d-inline" asp-action="Delete" asp-route-id="@item.Id" method="post" onsubmit="return confirm('¿Eliminar este reporte?')"><button class="btn btn-sm btn-outline-danger">Eliminar</button></form></td></tr>
+        <td class="admin-actions-cell"><div class="admin-actions">@if (item.IsActive) { <a class="btn btn-sm btn-outline-success" asp-controller="Reports" asp-action="Run" asp-route-id="@item.Id"><span class="btn-icon" aria-hidden="true">↗</span><span>Abrir</span></a> } <a class="btn btn-sm btn-outline-secondary" asp-action="Export" asp-route-id="@item.Id" title="Descargar configuración portable"><span class="btn-icon" aria-hidden="true">↓</span><span>JSON</span></a> <a class="btn btn-sm btn-outline-primary" asp-action="Edit" asp-route-id="@item.Id"><span class="btn-icon" aria-hidden="true">✎</span><span>Editar</span></a> <form asp-action="Delete" asp-route-id="@item.Id" method="post" onsubmit="return confirm('¿Eliminar este reporte?')"><button class="btn btn-sm btn-outline-danger"><span class="btn-icon" aria-hidden="true">×</span><span>Eliminar</span></button></form></div></td></tr>
     }
     </tbody>
 </table></div>
@@ -56,7 +56,7 @@
                     </div>
                     <div class="import-note mt-4">El reporte importado recibirá un identificador nuevo y la fecha/hora se agregará a su nombre para evitar sobrescrituras.</div>
                 </div>
-                <div class="modal-footer"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-primary">Importar reporte</button></div>
+                <div class="modal-footer"><button type="button" class="btn btn-light" data-bs-dismiss="modal"><span class="btn-icon" aria-hidden="true">←</span><span>Cancelar</span></button><button type="submit" class="btn btn-primary"><span class="btn-icon" aria-hidden="true">↑</span><span>Importar reporte</span></button></div>
             </form>
         </div>
     </div>
