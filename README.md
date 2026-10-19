@@ -2,6 +2,112 @@
 
 Aplicación web ASP.NET Core 9 para publicar consultas de SQL Server como reportes parametrizados, mostrarlos en una tabla HTML y exportarlos a Excel.
 
+## Guía rápida: desde la descarga hasta el primer reporte
+
+### 1. Requisitos
+
+- Una computadora o servidor con acceso a la instancia de SQL Server donde están las empresas de CONTPAQi Comercial.
+- [.NET 9 SDK](https://dotnet.microsoft.com/download/dotnet/9.0) si ejecutarás el proyecto desde el código fuente.
+- Una cuenta de SQL Server con permisos exclusivamente de lectura sobre la base de datos de la empresa.
+- El puerto `5080` disponible si otros equipos de la red abrirán la aplicación.
+
+> Antes de comenzar, respalda la información de la empresa. ARX Reportes sólo debe conectarse con un usuario SQL de lectura.
+
+### 2. Descargar el proyecto
+
+Puedes abrir [github.com/capvcapv/arx_reportes](https://github.com/capvcapv/arx_reportes), pulsar **Code → Download ZIP** y descomprimir el archivo, o clonarlo con Git:
+
+```bash
+git clone https://github.com/capvcapv/arx_reportes.git
+cd arx_reportes
+```
+
+### 3. Ejecutarlo desde el código fuente
+
+Abre una terminal dentro de la carpeta del proyecto y ejecuta:
+
+```bash
+dotnet restore
+dotnet run
+```
+
+Después abre en el navegador:
+
+```text
+http://localhost:5080
+```
+
+Para entrar como administrador utiliza:
+
+```text
+http://localhost:5080/admin/acceso
+```
+
+La clave inicial se encuentra en la sección `Admin:Password` de `appsettings.json`. Cámbiala antes de utilizar la aplicación en producción; también puedes definirla mediante la variable de entorno `Admin__Password`.
+
+### 4. Ejecutar una versión ya publicada en Windows
+
+Copia completa la carpeta publicada al servidor, abre PowerShell o CMD dentro de ella y ejecuta:
+
+```bat
+ArxReportes.exe --urls "http://0.0.0.0:5080"
+```
+
+En el mismo servidor abre `http://localhost:5080`. Desde otro equipo de la red utiliza la IP del servidor, por ejemplo `http://192.168.1.50:5080`, y permite el puerto TCP `5080` en el Firewall de Windows.
+
+No copies únicamente `ArxReportes.exe`: conserva todos los archivos de la publicación. La carpeta `App_Data` contiene conexiones, reportes, usuarios y llaves de cifrado; debe tener permisos de escritura y conservarse al actualizar la aplicación.
+
+### 5. Conectar una empresa de CONTPAQi Comercial
+
+1. Entra a **Administración → Conexiones → Nueva conexión**.
+2. Captura el servidor o instancia SQL, por ejemplo `SERVIDOR\COMPAC`.
+3. Indica el usuario y la contraseña SQL de sólo lectura.
+4. Pulsa **Consultar bases** y selecciona la base correspondiente a la empresa de CONTPAQi Comercial.
+5. Usa **Probar conexión** y, si la prueba es correcta, guarda la conexión.
+
+El nombre de la base depende de la instalación y de la empresa creada en CONTPAQi. Evita seleccionar la base de otra empresa únicamente porque tenga un nombre parecido.
+
+### 6. Crear un reporte de clientes
+
+Entra a **Administración → Reportes → Nuevo reporte** y utiliza esta configuración:
+
+- **Nombre:** `Listado de clientes`
+- **Descripción:** `Clientes registrados en CONTPAQi Comercial`
+- **Conexión:** la empresa configurada en el paso anterior
+- **Activo:** sí
+- **Parámetros:** ninguno
+
+Consulta SQL:
+
+```sql
+SELECT
+    C.CIDCLIENTEPROVEEDOR AS IdCliente,
+    C.CCODIGOCLIENTE AS Codigo,
+    C.CRAZONSOCIAL AS Cliente,
+    C.CRFC AS RFC
+FROM admClientes AS C
+WHERE C.CTIPOCLIENTE IN (1, 2)
+ORDER BY C.CRAZONSOCIAL;
+```
+
+Guarda el reporte, vuelve al inicio y abre **Listado de clientes**. Desde ahí podrás ejecutarlo y exportar el resultado a Excel.
+
+Las estructuras de CONTPAQi pueden variar entre versiones. Si alguna columna no existe en tu instalación, primero revisa una muestra con:
+
+```sql
+SELECT TOP 10 *
+FROM admClientes;
+```
+
+Después ajusta los nombres de las columnas del ejemplo. No utilices `INSERT`, `UPDATE`, `DELETE`, procedimientos de modificación ni una cuenta SQL con permisos de escritura.
+
+### 7. Publicarlo para usuarios finales
+
+1. Crea las cuentas desde **Administración → Usuarios**.
+2. Asigna a cada cuenta los reportes, KPI y gráficas que podrá consultar.
+3. Comparte la dirección `http://IP-DEL-SERVIDOR:5080`.
+4. Respalda periódicamente la carpeta `App_Data`.
+
 ## Indicadores KPI
 
 En **Administración → KPI** puedes crear indicadores para la pantalla principal. Cada consulta debe comenzar con `SELECT` o `WITH`, devolver una sola fila y exponer una columna principal, por ejemplo:
@@ -44,14 +150,9 @@ ORDER BY YEAR(CFECHA), MONTH(CFECHA);
 - La caché, el límite de filas y el máximo de series se controlan en la sección `Charts` de `appsettings.json`.
 - Asigna cada gráfica a los usuarios autorizados desde **Administración → Usuarios**.
 
-## Puesta en marcha
+## Configuración de reportes
 
-1. Cambia la clave administrativa. En producción usa la variable de entorno `Admin__Password`; el valor de `appsettings.json` es sólo inicial.
-2. Ejecuta `dotnet restore` y `dotnet run`.
-3. Abre la URL indicada en consola y entra a **Administración**.
-4. Crea una conexión SQL Server y usa **Probar**.
-   En el formulario puedes usar **Consultar bases** para ver únicamente las bases de datos a las que tiene acceso el usuario SQL capturado.
-5. Crea un reporte con una consulta `SELECT` o `WITH`. Para `WHERE ClienteId = @ClienteId`, registra un parámetro llamado `ClienteId`.
+Cada consulta principal debe comenzar con `SELECT` o `WITH`. Para una condición como `WHERE ClienteId = @ClienteId`, registra en el reporte un parámetro llamado `ClienteId`, sin incluir el signo `@` en su configuración.
 
 ### Parámetros obtenidos desde una consulta
 
@@ -80,12 +181,23 @@ En el editor de cada reporte puedes agregar hasta 12 KPI que se muestran encima 
 En el editor de reportes puedes convertir una columna del resultado en un enlace hacia otro reporte. Cada enlace permite configurar:
 
 - **Columna clicable:** el alias exacto que verá y pulsará el usuario, por ejemplo `Cliente` o `Folio`.
-- **Valor a enviar:** otra columna de la misma fila, como `ClienteId`; si se deja vacía se usa el valor de la columna clicable.
-- **Reporte y parámetro destino:** el reporte que mostrará el detalle y el parámetro que recibirá el valor.
+- **Reporte destino:** el reporte que mostrará el detalle.
+- **Parámetros enviados desde la fila:** agrega hasta 20 relaciones por enlace, por ejemplo `ClienteId → ClienteId` y `DocumentoId → DocumentoId`. La columna izquierda debe existir en el resultado padre y el parámetro derecho en el reporte hijo.
 - **Ejecución automática:** abre el detalle ya consultado o solamente deja su filtro precargado.
 - **Nueva pestaña:** conserva abierto el reporte principal mientras se consulta el detalle.
+- **Heredar filtros:** envía al destino los valores actuales de todos los parámetros que existan con el mismo nombre en ambos reportes. Los mapeos de la fila tienen prioridad si apuntan al mismo parámetro. Si el hijo sólo necesita filtros como `FechaCorte`, puedes dejar la lista de mapeos vacía y activar esta opción.
 
-El enlace sólo aparece cuando ambas columnas existen en el resultado, el reporte destino está activo y el usuario tiene permiso para ejecutarlo. Los enlaces de desglose también viajan en los archivos JSON; al importar se vuelven a vincular por el nombre del reporte destino.
+El enlace sólo aparece cuando todas las columnas configuradas existen en el resultado, el reporte destino está activo y el usuario tiene permiso para ejecutarlo. Los enlaces de desglose y todos sus mapeos también viajan en los archivos JSON; al importar se vuelven a vincular por el nombre del reporte destino. Las configuraciones antiguas de un solo parámetro se migran automáticamente.
+
+### Encabezado de Excel
+
+Cada archivo exportado incluye antes de los KPI y de la tabla:
+
+- Nombre de la empresa y del reporte.
+- Base de datos, fecha/hora de generación y usuario.
+- Parámetros aplicados con sus etiquetas; para parámetros de consulta se exporta el texto visible y no solamente el identificador.
+
+Configura el nombre de la empresa en **Administración → Conexiones**. Las conexiones anteriores siguen siendo compatibles: si el campo queda vacío se utiliza el nombre de la conexión.
 
 ## Transferir reportes
 

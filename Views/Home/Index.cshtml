@@ -5,7 +5,7 @@
 
 <section class="hero mb-5">
     <div class="hero-copy">
-        <span class="eyebrow">CENTRO DE INFORMACIÓN</span>
+        <span class="eyebrow">Centro de información</span>
         <h1>Tu información, de un vistazo</h1>
         <p>Revisa los indicadores principales o abre un reporte para consultar el detalle.</p>
     </div>
@@ -15,7 +15,7 @@
 {
     <section class="dashboard-kpis" aria-labelledby="kpi-title">
         <div class="results-heading kpi-heading">
-            <div><span class="eyebrow">RESUMEN</span><h2 id="kpi-title">Indicadores clave</h2><p>Los valores se actualizan automáticamente según la caché configurada.</p></div>
+            <div><span class="eyebrow">Resumen</span><h2 id="kpi-title">Indicadores clave</h2><p>Los valores se actualizan automáticamente según la caché configurada.</p></div>
             <a class="btn btn-sm btn-outline-primary" asp-action="Index" asp-route-refreshKpis="true" asp-route-refreshCharts="true">↻ Actualizar panel</a>
         </div>
         <div class="kpi-grid">
@@ -57,7 +57,7 @@
 {
     <section class="dashboard-charts" aria-labelledby="charts-title">
         <div class="results-heading chart-heading">
-            <div><span class="eyebrow">TENDENCIAS</span><h2 id="charts-title">Análisis visual</h2><p>Compara periodos, categorías y series directamente desde tus datos.</p></div>
+            <div><span class="eyebrow">Tendencias</span><h2 id="charts-title">Análisis visual</h2><p>Compara periodos, categorías y series directamente desde tus datos.</p></div>
             <a class="btn btn-sm btn-outline-primary" asp-action="Index" asp-route-refreshKpis="true" asp-route-refreshCharts="true">↻ Actualizar panel</a>
         </div>
         <div class="chart-grid">
@@ -112,7 +112,7 @@
     </section>
 }
 
-<div class="results-heading reports-catalog-heading"><div><span class="eyebrow">DETALLE</span><h2>Reportes disponibles</h2><p>Selecciona un reporte, captura sus parámetros y consulta la información al momento.</p></div></div>
+<div class="results-heading reports-catalog-heading"><div><span class="eyebrow">Detalle</span><h2>Reportes disponibles</h2><p>Selecciona un reporte, captura sus parámetros y consulta la información al momento.</p></div></div>
 
 @if (Model.Reports.Count == 0)
 {
@@ -147,10 +147,10 @@ else
 
     static string ChartTypeName(ChartType type) => type switch
     {
-        ChartType.Lineas => "LÍNEAS",
-        ChartType.Area => "ÁREA",
-        ChartType.Dona => "DONA",
-        _ => "BARRAS"
+        ChartType.Lineas => "Líneas",
+        ChartType.Area => "Área",
+        ChartType.Dona => "Dona",
+        _ => "Barras"
     };
 
     static string FormatChartValue(decimal? value, ChartValueFormat format, int decimalPlaces)

@@ -12,10 +12,6 @@
         <input name="Report.Drilldowns[@index].SourceColumn" data-drilldown-field="SourceColumn" value="@drilldown.SourceColumn" class="form-control" placeholder="Cliente" required />
     </div>
     <div>
-        <label class="form-label">Valor a enviar</label>
-        <input name="Report.Drilldowns[@index].ValueColumn" data-drilldown-field="ValueColumn" value="@drilldown.ValueColumn" class="form-control" placeholder="ClienteId (opcional)" />
-    </div>
-    <div>
         <label class="form-label">Reporte destino</label>
         <select name="Report.Drilldowns[@index].TargetReportId" data-drilldown-field="TargetReportId" class="form-select drilldown-target" required>
             <option value="">Selecciona…</option>
@@ -29,19 +25,39 @@
             }
         </select>
     </div>
-    <div>
-        <label class="form-label">Parámetro destino</label>
-        <select name="Report.Drilldowns[@index].TargetParameterName" data-drilldown-field="TargetParameterName" data-selected="@drilldown.TargetParameterName" class="form-select drilldown-parameter" required>
-            <option value="">Selecciona…</option>
-            @foreach (var parameterName in parameterNames)
-            {
-                <option value="@parameterName" selected="@(string.Equals(parameterName, drilldown.TargetParameterName, StringComparison.OrdinalIgnoreCase))">@@@parameterName</option>
-            }
-        </select>
-    </div>
     <div class="drilldown-switches">
-        <div class="form-check form-switch"><input name="Report.Drilldowns[@index].AutoExecute" data-drilldown-field="AutoExecute" class="form-check-input" type="checkbox" value="true" checked="@drilldown.AutoExecute" /><label class="form-check-label">Ejecutar</label></div>
+        <div class="form-check form-switch"><input name="Report.Drilldowns[@index].AutoExecute" data-drilldown-field="AutoExecute" class="form-check-input" type="checkbox" value="true" checked="@drilldown.AutoExecute" /><input name="Report.Drilldowns[@index].AutoExecute" data-drilldown-field="AutoExecute" type="hidden" value="false" /><label class="form-check-label">Ejecutar</label></div>
         <div class="form-check form-switch"><input name="Report.Drilldowns[@index].OpenInNewTab" data-drilldown-field="OpenInNewTab" class="form-check-input" type="checkbox" value="true" checked="@drilldown.OpenInNewTab" /><label class="form-check-label">Nueva pestaña</label></div>
+        <div class="form-check form-switch"><input name="Report.Drilldowns[@index].PassParentParameters" data-drilldown-field="PassParentParameters" class="form-check-input" type="checkbox" value="true" checked="@drilldown.PassParentParameters" /><label class="form-check-label">Heredar filtros</label></div>
     </div>
     <div class="drilldown-remove"><button type="button" class="btn btn-sm btn-outline-danger remove-drilldown"><span class="btn-icon" aria-hidden="true">×</span><span>Quitar</span></button></div>
+    <div class="drilldown-parameter-config">
+        <div class="drilldown-parameter-heading">
+            <div><strong>Parámetros enviados desde la fila</strong><small>Relaciona cada columna del resultado padre con un parámetro del reporte hijo.</small></div>
+            <button type="button" class="btn btn-sm btn-outline-primary add-drilldown-mapping"><span class="btn-icon" aria-hidden="true">＋</span><span>Agregar parámetro</span></button>
+        </div>
+        <div class="drilldown-mappings">
+        @for (var mappingIndex = 0; mappingIndex < drilldown.ParameterMappings.Count; mappingIndex++)
+        {
+            var mapping = drilldown.ParameterMappings[mappingIndex];
+            var parameterExists = parameterNames.Any(x => string.Equals(x, mapping.TargetParameterName, StringComparison.OrdinalIgnoreCase));
+            <div class="drilldown-mapping-row">
+                <div><label class="form-label">Columna del padre</label><input name="Report.Drilldowns[@index].ParameterMappings[@mappingIndex].SourceColumn" data-mapping-field="SourceColumn" value="@mapping.SourceColumn" class="form-control" placeholder="ClienteId" required /></div>
+                <div><label class="form-label">Parámetro del hijo</label><select name="Report.Drilldowns[@index].ParameterMappings[@mappingIndex].TargetParameterName" data-mapping-field="TargetParameterName" data-selected="@mapping.TargetParameterName" class="form-select drilldown-mapping-target" required>
+                    <option value="">Selecciona…</option>
+                    @if (!parameterExists && !string.IsNullOrWhiteSpace(mapping.TargetParameterName))
+                    {
+                        <option value="@mapping.TargetParameterName" selected>No encontrado: @mapping.TargetParameterName</option>
+                    }
+                    @foreach (var parameterName in parameterNames)
+                    {
+                        <option value="@parameterName" selected="@(string.Equals(parameterName, mapping.TargetParameterName, StringComparison.OrdinalIgnoreCase))">@@@parameterName</option>
+                    }
+                </select></div>
+                <div class="drilldown-mapping-remove"><button type="button" class="btn btn-sm btn-outline-danger remove-drilldown-mapping" aria-label="Quitar parámetro"><span aria-hidden="true">×</span></button></div>
+            </div>
+        }
+        </div>
+        <div class="form-text drilldown-mapping-empty @(drilldown.ParameterMappings.Count > 0 ? "d-none" : "")">Sin valores de la fila. Puedes usar únicamente “Heredar filtros”.</div>
+    </div>
 </div>

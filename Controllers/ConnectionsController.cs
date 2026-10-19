@@ -88,6 +88,7 @@ public sealed class ConnectionsController(CatalogStore store, SqlReportRunner ru
 
     private async Task<IActionResult> Save(ConnectionDefinition model, CancellationToken cancellationToken)
     {
+        model.CompanyName = string.IsNullOrWhiteSpace(model.CompanyName) ? null : model.CompanyName.Trim();
         if (!model.IntegratedSecurity && string.IsNullOrWhiteSpace(model.UserName))
             ModelState.AddModelError(nameof(model.UserName), "Indique el usuario SQL.");
 

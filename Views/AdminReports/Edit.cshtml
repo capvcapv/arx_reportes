@@ -1,7 +1,7 @@
 @model ReportEditViewModel
 @using ArxReportes.Models
 @{ var isNew = string.IsNullOrWhiteSpace(Model.Report.Name); ViewData["Title"] = isNew ? "Nuevo reporte" : "Editar reporte"; }
-<div class="page-heading"><div><span class="eyebrow">DISEÑADOR</span><h1>@ViewData["Title"]</h1><p>Define la consulta parametrizada y los campos que verá el usuario.</p></div></div>
+<div class="page-heading"><div><span class="eyebrow">Diseñador</span><h1>@ViewData["Title"]</h1><p>Define la consulta parametrizada y los campos que verá el usuario.</p></div></div>
 <form method="post" class="panel form-panel">
     <div asp-validation-summary="All" class="alert alert-danger"></div><div class="row g-4">
         <div class="col-md-8"><label asp-for="Report.Name" class="form-label"></label><input asp-for="Report.Name" class="form-control" /><span asp-validation-for="Report.Name" class="text-danger"></span></div>
@@ -28,8 +28,8 @@
     <div id="report-kpis" class="report-kpi-config-list">@for (var index = 0; index < Model.Report.ReportKpis.Count; index++) { <partial name="_ReportKpiRow" model="(Model.Report.ReportKpis[index], index)" /> }</div>
     <div id="no-report-kpis" class="parameter-empty @(Model.Report.ReportKpis.Count > 0 ? "d-none" : "")">Este reporte aún no muestra indicadores.</div>
 
-    <div class="section-heading"><div><h2>Desglose hacia otros reportes</h2><p>Convierte una columna del resultado en un enlace y pasa el valor de la fila a un parámetro del reporte destino.</p></div><button class="btn btn-sm btn-outline-primary" id="add-drilldown" type="button"><span class="btn-icon" aria-hidden="true">＋</span><span>Agregar desglose</span></button></div>
-    <div class="report-kpi-help mb-3"><strong>Ejemplo:</strong> haz clicable <code>Cliente</code>, envía <code>ClienteId</code> y abre el reporte “Documentos del cliente” en su parámetro <code>@@ClienteId</code>. Si “Valor a enviar” queda vacío, se enviará la misma columna clicable.</div>
+    <div class="section-heading"><div><h2>Desglose hacia otros reportes</h2><p>Convierte una columna del resultado en un enlace y envía uno o varios valores de la fila al reporte destino.</p></div><button class="btn btn-sm btn-outline-primary" id="add-drilldown" type="button"><span class="btn-icon" aria-hidden="true">＋</span><span>Agregar desglose</span></button></div>
+    <div class="report-kpi-help mb-3"><strong>Ejemplo:</strong> puedes relacionar <code>ClienteId → ClienteId</code> y <code>DocumentoId → DocumentoId</code> en el mismo enlace. “Heredar filtros” también conserva parámetros comunes como <code>FechaCorte</code>.</div>
     <div id="drilldowns" class="drilldown-config-list">@for (var index = 0; index < Model.Report.Drilldowns.Count; index++)
     {
         <partial name="_DrilldownRow" model="new ReportDrilldownEditRowViewModel { Drilldown = Model.Report.Drilldowns[index], Index = index, TargetReports = Model.TargetReports }" />
@@ -61,11 +61,15 @@
 </div></template>
 <template id="drilldown-template"><div class="drilldown-config-row">
     <div><label class="form-label">Columna clicable</label><input data-drilldown-field="SourceColumn" class="form-control" placeholder="Cliente" required /></div>
-    <div><label class="form-label">Valor a enviar</label><input data-drilldown-field="ValueColumn" class="form-control" placeholder="ClienteId (opcional)" /></div>
     <div><label class="form-label">Reporte destino</label><select data-drilldown-field="TargetReportId" class="form-select drilldown-target" required><option value="">Selecciona…</option>@foreach (var target in Model.TargetReports) { <option value="@target.Id" data-parameters="@string.Join("|", target.ParameterNames)">@target.Name@(!target.IsActive ? " (inactivo)" : "")</option> }</select></div>
-    <div><label class="form-label">Parámetro destino</label><select data-drilldown-field="TargetParameterName" class="form-select drilldown-parameter" required><option value="">Selecciona el reporte…</option></select></div>
-    <div class="drilldown-switches"><div class="form-check form-switch"><input data-drilldown-field="AutoExecute" class="form-check-input" type="checkbox" value="true" checked /><label class="form-check-label">Ejecutar</label></div><div class="form-check form-switch"><input data-drilldown-field="OpenInNewTab" class="form-check-input" type="checkbox" value="true" /><label class="form-check-label">Nueva pestaña</label></div></div>
+    <div class="drilldown-switches"><div class="form-check form-switch"><input data-drilldown-field="AutoExecute" class="form-check-input" type="checkbox" value="true" checked /><input data-drilldown-field="AutoExecute" type="hidden" value="false" /><label class="form-check-label">Ejecutar</label></div><div class="form-check form-switch"><input data-drilldown-field="OpenInNewTab" class="form-check-input" type="checkbox" value="true" /><label class="form-check-label">Nueva pestaña</label></div><div class="form-check form-switch"><input data-drilldown-field="PassParentParameters" class="form-check-input" type="checkbox" value="true" checked /><label class="form-check-label">Heredar filtros</label></div></div>
     <div class="drilldown-remove"><button type="button" class="btn btn-sm btn-outline-danger remove-drilldown"><span class="btn-icon" aria-hidden="true">×</span><span>Quitar</span></button></div>
+    <div class="drilldown-parameter-config"><div class="drilldown-parameter-heading"><div><strong>Parámetros enviados desde la fila</strong><small>Relaciona cada columna del resultado padre con un parámetro del reporte hijo.</small></div><button type="button" class="btn btn-sm btn-outline-primary add-drilldown-mapping"><span class="btn-icon" aria-hidden="true">＋</span><span>Agregar parámetro</span></button></div><div class="drilldown-mappings"></div><div class="form-text drilldown-mapping-empty">Sin valores de la fila. Puedes usar únicamente “Heredar filtros”.</div></div>
+</div></template>
+<template id="drilldown-mapping-template"><div class="drilldown-mapping-row">
+    <div><label class="form-label">Columna del padre</label><input data-mapping-field="SourceColumn" class="form-control" placeholder="ClienteId" required /></div>
+    <div><label class="form-label">Parámetro del hijo</label><select data-mapping-field="TargetParameterName" data-selected="" class="form-select drilldown-mapping-target" required><option value="">Selecciona…</option></select></div>
+    <div class="drilldown-mapping-remove"><button type="button" class="btn btn-sm btn-outline-danger remove-drilldown-mapping" aria-label="Quitar parámetro"><span aria-hidden="true">×</span></button></div>
 </div></template>
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
@@ -99,24 +103,38 @@
 
         const drilldownList=document.getElementById('drilldowns'),drilldownEmpty=document.getElementById('no-drilldowns'),addDrilldown=document.getElementById('add-drilldown');
         function updateDrilldownParameters(row,keepSelection=true){
-            const target=row.querySelector('.drilldown-target'),parameter=row.querySelector('.drilldown-parameter');
-            if(!target||!parameter)return;
-            const selected=keepSelection?(parameter.dataset.selected||parameter.value):'';
+            const target=row.querySelector('.drilldown-target');
+            if(!target)return;
             const names=(target.selectedOptions[0]?.dataset.parameters||'').split('|').filter(Boolean);
-            parameter.replaceChildren(new Option(names.length?'Selecciona…':'El reporte no tiene parámetros',''));
-            names.forEach(name=>parameter.add(new Option(`@@${name}`,name,false,name.toLowerCase()===selected.toLowerCase())));
-            parameter.dataset.selected=parameter.value;
+            row.querySelectorAll('.drilldown-mapping-target').forEach(parameter=>{
+                const selected=keepSelection?(parameter.dataset.selected||parameter.value):'';
+                parameter.replaceChildren(new Option('Selecciona…',''));
+                names.forEach(name=>parameter.add(new Option(`@@${name}`,name,false,name.toLowerCase()===selected.toLowerCase())));
+                parameter.dataset.selected=parameter.value;
+            });
         }
         function reindexDrilldowns(){
             const rows=[...drilldownList.querySelectorAll('.drilldown-config-row')];
-            rows.forEach((row,index)=>{row.querySelectorAll('[data-drilldown-field]').forEach(input=>input.name=`Report.Drilldowns[${index}].${input.dataset.drilldownField}`);updateDrilldownParameters(row,true);});
+            rows.forEach((row,index)=>{
+                row.querySelectorAll('[data-drilldown-field]').forEach(input=>input.name=`Report.Drilldowns[${index}].${input.dataset.drilldownField}`);
+                const mappings=[...row.querySelectorAll('.drilldown-mapping-row')];
+                mappings.forEach((mapping,mappingIndex)=>mapping.querySelectorAll('[data-mapping-field]').forEach(input=>input.name=`Report.Drilldowns[${index}].ParameterMappings[${mappingIndex}].${input.dataset.mappingField}`));
+                row.querySelector('.drilldown-mapping-empty')?.classList.toggle('d-none',mappings.length>0);
+                const addMapping=row.querySelector('.add-drilldown-mapping');
+                if(addMapping){addMapping.disabled=mappings.length>=20;addMapping.title=mappings.length>=20?'Máximo 20 parámetros por desglose':'';}
+                updateDrilldownParameters(row,true);
+            });
             drilldownEmpty.classList.toggle('d-none',rows.length>0);
             addDrilldown.disabled=rows.length>=20;
             addDrilldown.title=rows.length>=20?'Máximo 20 enlaces de desglose por reporte':'';
         }
         addDrilldown.addEventListener('click',()=>{if(drilldownList.children.length>=20)return;drilldownList.append(document.getElementById('drilldown-template').content.cloneNode(true));reindexDrilldowns();});
-        drilldownList.addEventListener('click',event=>{if(event.target.closest('.remove-drilldown')){event.target.closest('.drilldown-config-row').remove();reindexDrilldowns();}});
-        drilldownList.addEventListener('change',event=>{if(event.target.matches('.drilldown-target')){const row=event.target.closest('.drilldown-config-row');row.querySelector('.drilldown-parameter').dataset.selected='';updateDrilldownParameters(row,false);}if(event.target.matches('.drilldown-parameter'))event.target.dataset.selected=event.target.value;});
+        drilldownList.addEventListener('click',event=>{
+            if(event.target.closest('.remove-drilldown')){event.target.closest('.drilldown-config-row').remove();reindexDrilldowns();return;}
+            if(event.target.closest('.add-drilldown-mapping')){const row=event.target.closest('.drilldown-config-row');if(row.querySelectorAll('.drilldown-mapping-row').length>=20)return;row.querySelector('.drilldown-mappings').append(document.getElementById('drilldown-mapping-template').content.cloneNode(true));reindexDrilldowns();return;}
+            if(event.target.closest('.remove-drilldown-mapping')){event.target.closest('.drilldown-mapping-row').remove();reindexDrilldowns();}
+        });
+        drilldownList.addEventListener('change',event=>{if(event.target.matches('.drilldown-target')){const row=event.target.closest('.drilldown-config-row');row.querySelectorAll('.drilldown-mapping-target').forEach(parameter=>parameter.dataset.selected='');updateDrilldownParameters(row,false);}if(event.target.matches('.drilldown-mapping-target'))event.target.dataset.selected=event.target.value;});
         reindexDrilldowns();
     </script>
 }

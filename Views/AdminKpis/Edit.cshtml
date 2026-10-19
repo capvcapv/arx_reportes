@@ -4,7 +4,7 @@
     var isNew = string.IsNullOrWhiteSpace(Model.Kpi.Name);
     ViewData["Title"] = isNew ? "Nuevo KPI" : "Editar KPI";
 }
-<div class="page-heading"><div><span class="eyebrow">INDICADOR</span><h1>@ViewData["Title"]</h1><p>La consulta debe devolver una sola fila con el valor que aparecerá en el inicio.</p></div></div>
+<div class="page-heading"><div><span class="eyebrow">Indicador</span><h1>@ViewData["Title"]</h1><p>La consulta debe devolver una sola fila con el valor que aparecerá en el inicio.</p></div></div>
 <form method="post" class="panel form-panel">
     <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
     <div class="row g-4">

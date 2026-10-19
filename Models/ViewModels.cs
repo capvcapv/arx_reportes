@@ -42,14 +42,21 @@ public sealed class ReportDrilldownEditRowViewModel
 public sealed class ReportDrilldownBindingViewModel
 {
     public int ClickableColumnIndex { get; set; }
-    public int ValueColumnIndex { get; set; }
     public Guid TargetReportId { get; set; }
     public string TargetReportName { get; set; } = "";
+    public List<ReportDrilldownParameterBindingViewModel> ParameterMappings { get; set; } = [];
+    public bool AutoExecute { get; set; }
+    public bool OpenInNewTab { get; set; }
+    public List<string> SharedParameterNames { get; set; } = [];
+}
+
+public sealed class ReportDrilldownParameterBindingViewModel
+{
+    public int SourceColumnIndex { get; set; }
     public string TargetParameterName { get; set; } = "";
     public ReportParameterType TargetParameterType { get; set; }
     public LookupValueType TargetLookupValueType { get; set; }
-    public bool AutoExecute { get; set; }
-    public bool OpenInNewTab { get; set; }
+    public bool IsRequired { get; set; }
 }
 
 public sealed class ReportKpiCardViewModel

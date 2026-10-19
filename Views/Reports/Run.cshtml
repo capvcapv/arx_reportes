@@ -42,7 +42,7 @@
     @if (Model.Kpis.Count > 0)
     {
         <section class="report-kpi-summary" aria-labelledby="report-kpi-title">
-            <div class="results-heading report-kpi-heading"><div><span class="eyebrow">RESUMEN DEL REPORTE</span><h2 id="report-kpi-title">Indicadores del resultado</h2><p>Calculados con las filas obtenidas para los parámetros seleccionados.</p></div></div>
+            <div class="results-heading report-kpi-heading"><div><span class="eyebrow">Resumen del reporte</span><h2 id="report-kpi-title">Indicadores del resultado</h2><p>Calculados con las filas obtenidas para los parámetros seleccionados.</p></div></div>
             @if (Model.Result.Truncated) { <div class="alert alert-warning py-2"><strong>Atención:</strong> los KPI se calcularon únicamente con las filas mostradas porque el resultado alcanzó el límite configurado.</div> }
             <div class="report-kpi-grid">
             @foreach (var card in Model.Kpis)
@@ -68,10 +68,30 @@
         {
             var value = row[columnIndex];
             var binding = Model.Drilldowns.FirstOrDefault(x => x.ClickableColumnIndex == columnIndex);
-            var drilldownValue = binding is null ? null : FormatDrilldownValue(row[binding.ValueColumnIndex], binding);
-            if (binding is not null && value is not null && drilldownValue is not null)
+            var canOpenDrilldown = binding is not null && value is not null;
+            var routeValues = new RouteValueDictionary();
+            if (binding is not null)
             {
-                var routeValues = new RouteValueDictionary { ["id"] = binding.TargetReportId, ["p_" + binding.TargetParameterName] = drilldownValue };
+                routeValues["id"] = binding.TargetReportId;
+                foreach (var parameterName in binding.SharedParameterNames)
+                {
+                    if (Model.Values.TryGetValue(parameterName, out var parentValue))
+                        routeValues["p_" + parameterName] = parentValue ?? "";
+                }
+                foreach (var mapping in binding.ParameterMappings)
+                {
+                    var rawValue = row[mapping.SourceColumnIndex];
+                    var mappedValue = FormatDrilldownValue(rawValue, mapping);
+                    if (mappedValue is null && mapping.IsRequired)
+                    {
+                        canOpenDrilldown = false;
+                        break;
+                    }
+                    routeValues["p_" + mapping.TargetParameterName] = mappedValue ?? "";
+                }
+            }
+            if (binding is not null && canOpenDrilldown)
+            {
                 if (binding.AutoExecute) routeValues["autoRun"] = true;
                 var url = Url.Action("Run", "Reports", routeValues);
                 <td class="drilldown-cell"><a class="report-drilldown-link" href="@url" target="@(binding.OpenInNewTab ? "_blank" : null)" rel="@(binding.OpenInNewTab ? "noopener" : null)" title="Abrir @binding.TargetReportName"><span>@FormatValue(value)</span><span class="drilldown-arrow" aria-hidden="true">↗</span></a></td>
@@ -99,24 +119,24 @@
 }
 @functions {
     static string FormatValue(object? value) => value switch { null => "", DateTime date => date.ToString("dd/MM/yyyy HH:mm", CultureInfo.CurrentCulture), decimal number => number.ToString("N2", CultureInfo.CurrentCulture), bool boolean => boolean ? "Sí" : "No", byte[] bytes => $"[{bytes.Length} bytes]", _ => Convert.ToString(value, CultureInfo.CurrentCulture) ?? "" };
-    static string? FormatDrilldownValue(object? value, ReportDrilldownBindingViewModel binding)
+    static string? FormatDrilldownValue(object? value, ReportDrilldownParameterBindingViewModel mapping)
     {
         if (value is null or DBNull) return null;
-        var effectiveType = binding.TargetParameterType == ReportParameterType.Consulta
-            ? binding.TargetLookupValueType switch
+        var effectiveType = mapping.TargetParameterType == ReportParameterType.Consulta
+            ? mapping.TargetLookupValueType switch
             {
                 LookupValueType.Entero => ReportParameterType.Entero,
                 LookupValueType.Decimal => ReportParameterType.Decimal,
                 LookupValueType.Booleano => ReportParameterType.Booleano,
                 _ => ReportParameterType.Texto
             }
-            : binding.TargetParameterType;
+            : mapping.TargetParameterType;
         try
         {
             return effectiveType switch
             {
-                ReportParameterType.Fecha when value is DateTime date => date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
-                ReportParameterType.FechaHora when value is DateTime date => date.ToString("yyyy-MM-ddTHH:mm:ss", CultureInfo.InvariantCulture),
+                ReportParameterType.Fecha => Convert.ToDateTime(value, CultureInfo.CurrentCulture).ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+                ReportParameterType.FechaHora => Convert.ToDateTime(value, CultureInfo.CurrentCulture).ToString("yyyy-MM-ddTHH:mm:ss", CultureInfo.InvariantCulture),
                 ReportParameterType.Booleano => Convert.ToBoolean(value, CultureInfo.InvariantCulture) ? "true" : "false",
                 ReportParameterType.Entero => Convert.ToInt64(value, CultureInfo.InvariantCulture).ToString(CultureInfo.InvariantCulture),
                 ReportParameterType.Decimal => Convert.ToDecimal(value, CultureInfo.InvariantCulture).ToString(CultureInfo.InvariantCulture),

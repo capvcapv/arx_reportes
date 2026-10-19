@@ -1,6 +1,6 @@
 @model UserEditViewModel
 @{ var isNew = Model.Id == Guid.Empty; ViewData["Title"] = isNew ? "Nuevo usuario" : "Editar usuario"; }
-<div class="page-heading"><div><span class="eyebrow">SEGURIDAD</span><h1>@ViewData["Title"]</h1><p>Configura sus datos de acceso, indicadores, gráficas y reportes permitidos.</p></div></div>
+<div class="page-heading"><div><span class="eyebrow">Seguridad</span><h1>@ViewData["Title"]</h1><p>Configura sus datos de acceso, indicadores, gráficas y reportes permitidos.</p></div></div>
 <form method="post" class="panel form-panel">
     <input asp-for="Id" type="hidden" />
     <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>

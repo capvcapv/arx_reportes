@@ -8,7 +8,7 @@ namespace ArxReportes.Models;
 /// </summary>
 public sealed class ReportPackage
 {
-    public int SchemaVersion { get; set; } = 3;
+    public int SchemaVersion { get; set; } = 5;
     public DateTime ExportedAtUtc { get; set; } = DateTime.UtcNow;
     public string SourceConnectionName { get; set; } = "";
     public PortableReport Report { get; set; } = new();
@@ -34,9 +34,17 @@ public sealed class PortableReportDrilldown
     public string SourceColumn { get; set; } = "";
     public string? ValueColumn { get; set; }
     public string TargetReportName { get; set; } = "";
-    public string TargetParameterName { get; set; } = "";
+    public string? TargetParameterName { get; set; }
+    public List<PortableReportDrilldownParameterMapping> ParameterMappings { get; set; } = [];
     public bool AutoExecute { get; set; } = true;
     public bool OpenInNewTab { get; set; }
+    public bool PassParentParameters { get; set; }
+}
+
+public sealed class PortableReportDrilldownParameterMapping
+{
+    public string SourceColumn { get; set; } = "";
+    public string TargetParameterName { get; set; } = "";
 }
 
 public sealed class PortableReportKpi

@@ -4,7 +4,7 @@
     var isNew = string.IsNullOrWhiteSpace(Model.Chart.Name);
     ViewData["Title"] = isNew ? "Nueva gráfica" : "Editar gráfica";
 }
-<div class="page-heading"><div><span class="eyebrow">VISUALIZACIÓN</span><h1>@ViewData["Title"]</h1><p>La consulta debe devolver una fila por categoría y, opcionalmente, por serie.</p></div></div>
+<div class="page-heading"><div><span class="eyebrow">Visualización</span><h1>@ViewData["Title"]</h1><p>La consulta debe devolver una fila por categoría y, opcionalmente, por serie.</p></div></div>
 <form method="post" class="panel form-panel">
     <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
     <div class="row g-4">

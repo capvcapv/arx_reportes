@@ -240,6 +240,10 @@ public sealed class ConnectionDefinition
     [Display(Name = "Nombre")]
     public string Name { get; set; } = "";
 
+    [StringLength(150)]
+    [Display(Name = "Nombre de la empresa para exportaciones")]
+    public string? CompanyName { get; set; }
+
     [Required, StringLength(200)]
     [Display(Name = "Servidor / instancia")]
     public string Server { get; set; } = "";
@@ -333,16 +337,37 @@ public sealed class ReportDrilldownDefinition
     [StringLength(120)]
     public string? TargetReportName { get; set; }
 
-    [Required, StringLength(128)]
+    [StringLength(128)]
     [RegularExpression(@"^[A-Za-z_][A-Za-z0-9_]*$", ErrorMessage = "Use letras, números y guion bajo; no incluya @.")]
-    [Display(Name = "Parámetro destino")]
-    public string TargetParameterName { get; set; } = "";
+    [Display(Name = "Parámetro desde la fila")]
+    public string? TargetParameterName { get; set; }
+
+    /// <summary>
+    /// Mapeos de columnas del resultado padre hacia parámetros del reporte hijo.
+    /// ValueColumn y TargetParameterName se conservan sólo para leer configuraciones anteriores.
+    /// </summary>
+    public List<ReportDrilldownParameterMapping> ParameterMappings { get; set; } = [];
 
     [Display(Name = "Ejecutar automáticamente")]
     public bool AutoExecute { get; set; } = true;
 
     [Display(Name = "Abrir en otra pestaña")]
     public bool OpenInNewTab { get; set; }
+
+    [Display(Name = "Heredar parámetros del reporte padre")]
+    public bool PassParentParameters { get; set; }
+}
+
+public sealed class ReportDrilldownParameterMapping
+{
+    [Required, StringLength(128)]
+    [Display(Name = "Columna del reporte padre")]
+    public string SourceColumn { get; set; } = "";
+
+    [Required, StringLength(128)]
+    [RegularExpression(@"^[A-Za-z_][A-Za-z0-9_]*$", ErrorMessage = "Use letras, números y guion bajo; no incluya @.")]
+    [Display(Name = "Parámetro del reporte hijo")]
+    public string TargetParameterName { get; set; } = "";
 }
 
 public sealed class ReportKpiDefinition

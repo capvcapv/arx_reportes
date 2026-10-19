@@ -68,13 +68,17 @@ public sealed class AdminReportsController(CatalogStore store, IWebHostEnvironme
                 Drilldowns = report.Drilldowns.Select(x => new PortableReportDrilldown
                 {
                     SourceColumn = x.SourceColumn,
-                    ValueColumn = x.ValueColumn,
                     TargetReportName = data.Reports.FirstOrDefault(target => target.Id == x.TargetReportId)?.Name
                         ?? x.TargetReportName
                         ?? "",
-                    TargetParameterName = x.TargetParameterName,
+                    ParameterMappings = GetEffectiveMappings(x).Select(mapping => new PortableReportDrilldownParameterMapping
+                    {
+                        SourceColumn = mapping.SourceColumn,
+                        TargetParameterName = mapping.TargetParameterName
+                    }).ToList(),
                     AutoExecute = x.AutoExecute,
-                    OpenInNewTab = x.OpenInNewTab
+                    OpenInNewTab = x.OpenInNewTab,
+                    PassParentParameters = x.PassParentParameters
                 }).ToList(),
                 Parameters = report.Parameters.Select(x => new PortableReportParameter
                 {
@@ -141,7 +145,7 @@ public sealed class AdminReportsController(CatalogStore store, IWebHostEnvironme
                 package = JsonSerializer.Deserialize<ReportPackage>(jsonText!, PackageJsonOptions);
             }
 
-            if (package is null || package.SchemaVersion is < 1 or > 3)
+            if (package is null || package.SchemaVersion is < 1 or > 5)
                 throw new InvalidOperationException("El archivo no corresponde a una versión compatible de Arx Reportes.");
 
             ValidatePackage(package);
@@ -168,16 +172,17 @@ public sealed class AdminReportsController(CatalogStore store, IWebHostEnvironme
                 HighlightFirstColumnValues = NormalizeHighlightValues(package.Report.HighlightFirstColumnValues),
                 Drilldowns = (package.Report.Drilldowns ?? []).Select(x =>
                 {
-                    var target = FindPortableTargetReport(data.Reports, x.TargetReportName, x.TargetParameterName);
+                    var mappings = GetEffectiveMappings(x);
+                    var target = FindPortableTargetReport(data.Reports, x.TargetReportName, mappings.FirstOrDefault()?.TargetParameterName);
                     return new ReportDrilldownDefinition
                     {
                         SourceColumn = x.SourceColumn.Trim(),
-                        ValueColumn = string.IsNullOrWhiteSpace(x.ValueColumn) ? null : x.ValueColumn.Trim(),
                         TargetReportId = target?.Id ?? Guid.Empty,
                         TargetReportName = target?.Name ?? x.TargetReportName.Trim(),
-                        TargetParameterName = x.TargetParameterName.Trim(),
+                        ParameterMappings = mappings,
                         AutoExecute = x.AutoExecute,
-                        OpenInNewTab = x.OpenInNewTab
+                        OpenInNewTab = x.OpenInNewTab,
+                        PassParentParameters = x.PassParentParameters
                     };
                 }).ToList(),
                 ReportKpis = (package.Report.ReportKpis ?? []).Select(x => new ReportKpiDefinition
@@ -274,13 +279,22 @@ public sealed class AdminReportsController(CatalogStore store, IWebHostEnvironme
         model.Report.Drilldowns = (model.Report.Drilldowns ?? [])
             .Where(x => !string.IsNullOrWhiteSpace(x.SourceColumn) ||
                         !string.IsNullOrWhiteSpace(x.TargetParameterName) ||
+                        (x.ParameterMappings?.Count ?? 0) > 0 ||
                         x.TargetReportId != Guid.Empty)
             .ToList();
         foreach (var drilldown in model.Report.Drilldowns)
         {
             drilldown.SourceColumn = (drilldown.SourceColumn ?? "").Trim();
-            drilldown.ValueColumn = string.IsNullOrWhiteSpace(drilldown.ValueColumn) ? null : drilldown.ValueColumn.Trim();
-            drilldown.TargetParameterName = (drilldown.TargetParameterName ?? "").Trim();
+            drilldown.ParameterMappings = GetEffectiveMappings(drilldown)
+                .Where(x => !string.IsNullOrWhiteSpace(x.SourceColumn) || !string.IsNullOrWhiteSpace(x.TargetParameterName))
+                .Select(x => new ReportDrilldownParameterMapping
+                {
+                    SourceColumn = (x.SourceColumn ?? "").Trim(),
+                    TargetParameterName = (x.TargetParameterName ?? "").Trim()
+                })
+                .ToList();
+            drilldown.ValueColumn = null;
+            drilldown.TargetParameterName = null;
         }
 
         var data = await store.GetAsync(cancellationToken);
@@ -324,17 +338,34 @@ public sealed class AdminReportsController(CatalogStore store, IWebHostEnvironme
             var drilldown = model.Report.Drilldowns[index];
             if (string.IsNullOrWhiteSpace(drilldown.SourceColumn))
                 ModelState.AddModelError($"Report.Drilldowns[{index}].SourceColumn", "Indica la columna que será clicable.");
-            if (string.IsNullOrWhiteSpace(drilldown.TargetParameterName))
-                ModelState.AddModelError($"Report.Drilldowns[{index}].TargetParameterName", "Selecciona el parámetro que recibirá el valor.");
-
             var target = data.Reports.FirstOrDefault(x => x.Id == drilldown.TargetReportId && x.Id != model.Report.Id);
             if (target is null)
             {
                 ModelState.AddModelError($"Report.Drilldowns[{index}].TargetReportId", "Selecciona un reporte destino válido.");
                 continue;
             }
-            if (!target.Parameters.Any(x => string.Equals(x.Name, drilldown.TargetParameterName, StringComparison.OrdinalIgnoreCase)))
-                ModelState.AddModelError($"Report.Drilldowns[{index}].TargetParameterName", "El parámetro ya no existe en el reporte destino.");
+            if (drilldown.ParameterMappings.Count > 20)
+                ModelState.AddModelError($"Report.Drilldowns[{index}].ParameterMappings", "Puedes enviar un máximo de 20 parámetros por desglose.");
+            if (drilldown.ParameterMappings.GroupBy(x => x.TargetParameterName, StringComparer.OrdinalIgnoreCase).Any(x => x.Count() > 1))
+                ModelState.AddModelError($"Report.Drilldowns[{index}].ParameterMappings", "Cada parámetro del reporte hijo sólo puede recibir un valor.");
+            for (var mappingIndex = 0; mappingIndex < drilldown.ParameterMappings.Count; mappingIndex++)
+            {
+                var mapping = drilldown.ParameterMappings[mappingIndex];
+                if (string.IsNullOrWhiteSpace(mapping.SourceColumn))
+                    ModelState.AddModelError($"Report.Drilldowns[{index}].ParameterMappings[{mappingIndex}].SourceColumn", "Indica la columna del resultado padre.");
+                if (string.IsNullOrWhiteSpace(mapping.TargetParameterName) ||
+                    !target.Parameters.Any(x => string.Equals(x.Name, mapping.TargetParameterName, StringComparison.OrdinalIgnoreCase)))
+                    ModelState.AddModelError($"Report.Drilldowns[{index}].ParameterMappings[{mappingIndex}].TargetParameterName", "Selecciona un parámetro válido del reporte destino.");
+            }
+            var sharedParameters = target.Parameters
+                .Where(targetParameter => model.Report.Parameters.Any(sourceParameter =>
+                    string.Equals(sourceParameter.Name, targetParameter.Name, StringComparison.OrdinalIgnoreCase)))
+                .Select(x => x.Name)
+                .ToList();
+            if (!drilldown.PassParentParameters && drilldown.ParameterMappings.Count == 0)
+                ModelState.AddModelError($"Report.Drilldowns[{index}].ParameterMappings", "Agrega al menos un parámetro desde la fila o activa Heredar filtros.");
+            if (drilldown.PassParentParameters && sharedParameters.Count == 0)
+                ModelState.AddModelError($"Report.Drilldowns[{index}].PassParentParameters", "No hay parámetros con el mismo nombre en el reporte padre y el destino.");
             drilldown.TargetReportName = target.Name;
         }
 
@@ -355,7 +386,10 @@ public sealed class AdminReportsController(CatalogStore store, IWebHostEnvironme
         var data = await store.GetAsync(cancellationToken);
         foreach (var drilldown in report.Drilldowns.Where(x => x.TargetReportId == Guid.Empty && !string.IsNullOrWhiteSpace(x.TargetReportName)))
         {
-            var target = FindPortableTargetReport(data.Reports, drilldown.TargetReportName!, drilldown.TargetParameterName);
+            var target = FindPortableTargetReport(
+                data.Reports,
+                drilldown.TargetReportName!,
+                GetEffectiveMappings(drilldown).FirstOrDefault()?.TargetParameterName);
             if (target is null || target.Id == report.Id) continue;
             drilldown.TargetReportId = target.Id;
             drilldown.TargetReportName = target.Name;
@@ -380,8 +414,10 @@ public sealed class AdminReportsController(CatalogStore store, IWebHostEnvironme
         string? targetParameterName)
     {
         if (string.IsNullOrWhiteSpace(targetName)) return null;
-        var candidates = reports.Where(report => report.Parameters.Any(parameter =>
-            string.Equals(parameter.Name, targetParameterName, StringComparison.OrdinalIgnoreCase)));
+        var candidates = string.IsNullOrWhiteSpace(targetParameterName)
+            ? reports
+            : reports.Where(report => report.Parameters.Any(parameter =>
+                string.Equals(parameter.Name, targetParameterName, StringComparison.OrdinalIgnoreCase)));
         return candidates.FirstOrDefault(report => string.Equals(report.Name, targetName, StringComparison.OrdinalIgnoreCase))
             ?? candidates
                 .Where(report => report.Name.StartsWith(targetName.Trim() + " ", StringComparison.OrdinalIgnoreCase))
@@ -414,7 +450,16 @@ public sealed class AdminReportsController(CatalogStore store, IWebHostEnvironme
             drilldown.SourceColumn = (drilldown.SourceColumn ?? "").Trim();
             drilldown.ValueColumn = string.IsNullOrWhiteSpace(drilldown.ValueColumn) ? null : drilldown.ValueColumn.Trim();
             drilldown.TargetReportName = (drilldown.TargetReportName ?? "").Trim();
-            drilldown.TargetParameterName = (drilldown.TargetParameterName ?? "").Trim();
+            drilldown.TargetParameterName = string.IsNullOrWhiteSpace(drilldown.TargetParameterName)
+                ? null
+                : drilldown.TargetParameterName.Trim();
+            drilldown.ParameterMappings = GetEffectiveMappings(drilldown)
+                .Select(x => new PortableReportDrilldownParameterMapping
+                {
+                    SourceColumn = (x.SourceColumn ?? "").Trim(),
+                    TargetParameterName = (x.TargetParameterName ?? "").Trim()
+                })
+                .ToList();
         }
         if (string.IsNullOrWhiteSpace(report.Name) || report.Name.Length > 120)
             throw new InvalidOperationException("El nombre del reporte no es válido.");
@@ -451,14 +496,32 @@ public sealed class AdminReportsController(CatalogStore store, IWebHostEnvironme
                 TargetReportId = Guid.NewGuid(),
                 TargetReportName = portableDrilldown.TargetReportName,
                 TargetParameterName = portableDrilldown.TargetParameterName,
+                ParameterMappings = portableDrilldown.ParameterMappings.Select(x => new ReportDrilldownParameterMapping
+                {
+                    SourceColumn = x.SourceColumn,
+                    TargetParameterName = x.TargetParameterName
+                }).ToList(),
                 AutoExecute = portableDrilldown.AutoExecute,
-                OpenInNewTab = portableDrilldown.OpenInNewTab
+                OpenInNewTab = portableDrilldown.OpenInNewTab,
+                PassParentParameters = portableDrilldown.PassParentParameters
             };
             var results = new List<ValidationResult>();
             if (!Validator.TryValidateObject(target, new ValidationContext(target), results, true))
                 throw new InvalidOperationException(results.First().ErrorMessage ?? "Uno de los enlaces de desglose no es válido.");
             if (string.IsNullOrWhiteSpace(target.SourceColumn) || string.IsNullOrWhiteSpace(target.TargetReportName))
                 throw new InvalidOperationException("Cada desglose necesita una columna y el nombre del reporte destino.");
+            if (target.ParameterMappings.Count > 20)
+                throw new InvalidOperationException("Un desglose no puede enviar más de 20 parámetros.");
+            if (target.ParameterMappings.GroupBy(x => x.TargetParameterName, StringComparer.OrdinalIgnoreCase).Any(x => x.Count() > 1))
+                throw new InvalidOperationException("Un desglose contiene parámetros destino repetidos.");
+            foreach (var mapping in target.ParameterMappings)
+            {
+                var mappingResults = new List<ValidationResult>();
+                if (!Validator.TryValidateObject(mapping, new ValidationContext(mapping), mappingResults, true))
+                    throw new InvalidOperationException(mappingResults.First().ErrorMessage ?? "Uno de los parámetros enviados por el desglose no es válido.");
+            }
+            if (target.ParameterMappings.Count == 0 && !target.PassParentParameters)
+                throw new InvalidOperationException("Cada desglose debe enviar al menos un valor de la fila o heredar los parámetros del reporte padre.");
         }
 
         foreach (var portableKpi in report.ReportKpis)
@@ -523,6 +586,43 @@ public sealed class AdminReportsController(CatalogStore store, IWebHostEnvironme
         .Where(x => x.Length > 0)
         .Distinct(StringComparer.OrdinalIgnoreCase)
         .ToList();
+
+    private static List<ReportDrilldownParameterMapping> GetEffectiveMappings(ReportDrilldownDefinition drilldown)
+    {
+        if (drilldown.ParameterMappings is { Count: > 0 }) return drilldown.ParameterMappings;
+        if (string.IsNullOrWhiteSpace(drilldown.TargetParameterName)) return [];
+        return
+        [
+            new ReportDrilldownParameterMapping
+            {
+                SourceColumn = string.IsNullOrWhiteSpace(drilldown.ValueColumn)
+                    ? drilldown.SourceColumn
+                    : drilldown.ValueColumn,
+                TargetParameterName = drilldown.TargetParameterName
+            }
+        ];
+    }
+
+    private static List<ReportDrilldownParameterMapping> GetEffectiveMappings(PortableReportDrilldown drilldown)
+    {
+        if (drilldown.ParameterMappings is { Count: > 0 })
+            return drilldown.ParameterMappings.Select(x => new ReportDrilldownParameterMapping
+            {
+                SourceColumn = x.SourceColumn,
+                TargetParameterName = x.TargetParameterName
+            }).ToList();
+        if (string.IsNullOrWhiteSpace(drilldown.TargetParameterName)) return [];
+        return
+        [
+            new ReportDrilldownParameterMapping
+            {
+                SourceColumn = string.IsNullOrWhiteSpace(drilldown.ValueColumn)
+                    ? drilldown.SourceColumn
+                    : drilldown.ValueColumn,
+                TargetParameterName = drilldown.TargetParameterName
+            }
+        ];
+    }
 
     private static bool IsReadOnlyQuery(string sql)
     {

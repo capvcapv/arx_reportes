@@ -314,6 +314,20 @@ public sealed class CatalogStore
             report.HighlightFirstColumnValues ??= [];
             report.ReportKpis ??= [];
             report.Drilldowns ??= [];
+            foreach (var drilldown in report.Drilldowns)
+            {
+                drilldown.ParameterMappings ??= [];
+                if (drilldown.ParameterMappings.Count == 0 && !string.IsNullOrWhiteSpace(drilldown.TargetParameterName))
+                {
+                    drilldown.ParameterMappings.Add(new ReportDrilldownParameterMapping
+                    {
+                        SourceColumn = string.IsNullOrWhiteSpace(drilldown.ValueColumn)
+                            ? drilldown.SourceColumn
+                            : drilldown.ValueColumn,
+                        TargetParameterName = drilldown.TargetParameterName
+                    });
+                }
+            }
         }
         foreach (var user in data.Users)
         {

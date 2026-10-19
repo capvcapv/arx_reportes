@@ -6,7 +6,7 @@
     var connectionItems = ViewBag.ConnectionItems as List<SelectListItem> ?? new();
 }
 <div class="page-heading">
-    <div><span class="eyebrow">CONFIGURACIÓN</span><h1>Reportes</h1><p>Consultas publicadas para los usuarios.</p></div>
+    <div><span class="eyebrow">Configuración</span><h1>Reportes</h1><p>Consultas publicadas para los usuarios.</p></div>
     <div class="page-actions">
         <a class="btn btn-outline-secondary" asp-action="DownloadAiGuide" title="Descargar formato, reglas y ejemplo para una IA"><span class="btn-icon" aria-hidden="true">↓</span><span>Guía para IA</span></a>
         <button class="btn btn-outline-primary" type="button" data-bs-toggle="modal" data-bs-target="#importReportModal"><span class="btn-icon" aria-hidden="true">↑</span><span>Importar JSON</span></button>
@@ -31,7 +31,7 @@
         <div class="modal-content paper-modal">
             <form asp-action="Import" method="post" enctype="multipart/form-data">
                 <div class="modal-header">
-                    <div><span class="eyebrow">TRANSFERIR REPORTE</span><h2 class="modal-title fs-5 mt-1" id="importReportTitle">Importar archivo JSON</h2></div>
+                    <div><span class="eyebrow">Transferir reporte</span><h2 class="modal-title fs-5 mt-1" id="importReportTitle">Importar archivo JSON</h2></div>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                 </div>
                 <div class="modal-body">
