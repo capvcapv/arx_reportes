@@ -2,7 +2,10 @@
 @using ArxReportes.Models
 @using System.Globalization
 @using Microsoft.AspNetCore.Routing
-@{ ViewData["Title"] = Model.Report.Name; }
+@{
+    ViewData["Title"] = Model.Report.Name;
+    ViewData["ContentClass"] = "app-content-report";
+}
 <div class="page-heading"><div><a class="back-link" asp-controller="Home" asp-action="Index">← Todos los reportes</a><h1>@Model.Report.Name</h1><p>@Model.Report.Description</p></div></div>
 <form method="post" class="panel filter-panel" id="report-form">
     @if (Model.Report.Parameters.Count > 0)

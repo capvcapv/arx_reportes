@@ -42,7 +42,7 @@
             </div>
         </nav>
     </header>
-    <div class="container py-4 py-lg-5 app-content">
+    <div class="container py-4 py-lg-5 app-content @ViewData["ContentClass"]">
         @if (TempData["Success"] is string success)
         {
             <div class="alert alert-success alert-dismissible fade show" role="alert">@success<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>

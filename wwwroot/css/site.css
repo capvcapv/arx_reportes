@@ -18,6 +18,7 @@ html { min-height:100%; font-size:15px; }
 body { display:flex; flex-direction:column; min-height:100vh; margin:0; color:var(--ink); background:var(--canvas); font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif; line-height:1.55; }
 a { color:var(--primary); }
 .app-content { flex:1 0 auto; width:100%; }
+.app-content-report { max-width:none; padding-right:clamp(1rem,2.5vw,2.75rem)!important; padding-left:clamp(1rem,2.5vw,2.75rem)!important; }
 
 /* Navegación */
 .app-navbar { position:sticky; top:0; z-index:1030; min-height:72px; border:0; border-bottom:1px solid var(--line); background:#fff; }
@@ -133,7 +134,7 @@ a { color:var(--primary); }
 .report-card p { min-height:46px; margin-bottom:.85rem; color:var(--ink-secondary); }
 .report-card span { color:var(--primary); font-size:.86rem; font-weight:600; }
 .filter-panel { padding:1.3rem; }
-.result-table { max-height:65vh; }
+.result-table { width:100%; max-height:none; overflow-x:auto; overflow-y:visible; }
 .result-table thead { position:sticky; top:0; z-index:2; }
 .result-table th { padding:.8rem; border:0; color:#fff; background:#171717; white-space:nowrap; }
 .result-table td { padding:.65rem .8rem; white-space:nowrap; }

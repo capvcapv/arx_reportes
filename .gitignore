@@ -4,3 +4,13 @@ publish/
 App_Data/
 appsettings.Production.json
 .DS_Store
+
+# Archivos temporales usados para generar y revisar documentación/PDF.
+tmp/
+
+# Artefactos locales de Python.
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
